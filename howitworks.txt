@@ -1,0 +1,201 @@
+<hr>
+        <div class="text">
+            <h2>What is mysearch.one?</h2>
+            <p>mysearch.one is a versatile search tool that brings together multiple search engines and neural services in one place. Instead of being limited to one provider, you can easily choose the best option for your query—whether you need traditional search results or an AI-powered answer. This unified platform streamlines your search experience with a simple and intuitive interface.</p>
+            <p><strong>mysearch.one is not a search engine, it doesn't search for anything, it doesn't use AI to provide answers.</strong> mysearch.one just redirects your queries to your chosen search engines or AI services.</p>
+            <h2>How to use mysearch.one?</h2>
+            <p>Just type your search query into the box. If you want to specify a particular search engine or service, add a bang command (a short keyword preceded by an exclamation mark (!), slash (/), dash (-), colon (:), or at sign (@)) at the end of your query.</p>
+            <p><input type="text" value="🔍 How to eat healty? /google" title='Add "/google", "-google", "!google", ":google" or "@google" for Google Search.' disabled></p>
+            <p><input type="text" value="🔍 What is the weather like today? !yandex" title='Add "/yandex", "-yandex", "!yandex", ":yandex" or "@yandex" for Yandex Search.' disabled></p>
+            <p><input type="text" value="🔍 Funny cats videos -youtube" title='Add "/youtube", "-youtube", "!youtube", ":youtube" or "@youtube" to search in YouTube.' disabled></p>
+            <p><input type="text" value="🔍 Best restaurants in New York :bing" title='Add "/bing", "-bing", "!bing", ":bing" or "@bing" for Bing Search.' disabled></p>
+            <p><input type="text" value="🔍 Latest tech news @reddit" title='Add "/reddit", "-reddit", "!reddit", ":reddit" or "@reddit" to search in Reddit.' disabled></p>
+            <p>For example, if you want to search using Google, enter your query followed by !google.</p>
+            <p>All bang commands work interchangeably — you no longer need to switch keyboard layouts or use inconvenient symbols. Feel free to use !, /, -, :, or @ — whichever is most convenient for you. For example, !google, /google, -google, :google, and @google all work exactly the same way.</p>
+            <h2>How to set mysearch.one as your default search option?</h2>
+            <p><input type="text" value="https://mysearch.one/?q=%s" title='Use this link in your browser settings. Click to copy.' class="copycopy" readonly="readonly"></p>
+            <p>Set this string in your browser settings. That's all!</p>
+            <details>
+                <summary>How to in Chrome, Edge, Opera, Brave</summary>
+                <ol>
+                    <li>Go to "Settings"</li>
+                    <li>Click on "Privacy, search, and services" in the left sidebar</li>
+                    <li>Click on "Search and connected experiences"</li>
+                    <li>Click on "Address bar and search"</li>
+                    <li>Click on "Manage search engines"<br><small><i>Direct link: "chrome://settings/searchEngines"</i></small></li>
+                    <li>Click on the "Add" button in top right</li>
+                    <li>Fill in the form:<br>
+                    <strong>Search engine:</strong> mysearch.one<br>
+                    <strong>Shortcut:</strong> mysearch.one<br>
+                    <strong>URL with %s in place of query:</strong> https://mysearch.one/?q=%s</li>
+                    <li>Click on the "Add" button</li>
+                    <li>Find the new entry in the list of search engines and click on the three dots button</li>
+                    <li>Finally, click on the "Make default" option</li>
+                </ol>
+            </details>
+            <details>
+                <summary>How to in Chrome, Edge, Opera, Brave on mobile</summary>
+                <ol>
+                    <li>Open "https://mysearch.com" in your browser</li>
+                    <li>Search for whatever you want<br><i>This way your browser will recognise mysearch.one as a search engine</i></li>
+                    <li>Go to "Settings"</li>
+                    <li>Go to "General"</li>
+                    <li>Click on "Select search engine"</li>
+                    <li>Choose "mysearch.one" from the list</li>
+                </ol>
+            </details>
+            <h2>Supported bangs</h2>
+            <p>mysearch.one supports a wide range of bangs that let you choose the exact service you want. Some examples include:</p>
+            <ul>
+                <li><strong>google:</strong> g, google, г, гугл</li>
+                <li><strong>yandex:</strong> ya, yandex, я, яндекс</li>
+                <li><strong>bing:</strong> b, bing, б, бинг</li>
+                <li><strong>duckduckgo:</strong> d, duck, duckduck, duckduckgo, д, дак, дакдак, дакдакго</li>
+                <li><strong>brave:</strong> br, brave, бр, брейв</li>
+                <li><strong>kagi:</strong> k, kagi, к, каги</li>
+                <li><strong>baidu:</strong> bd, baidu, бд, байду, баиду</li>
+            </ul>
+            <p>mysearch.one supports bangs for maps:</p>
+            <ul>
+                <li><strong>google maps:</strong> gm, gmaps, map, maps, гм, гк, гкарты, гмапс, гмэпс, мэпс</li>
+                <li><strong>yandex maps:</strong> ymaps, як, якарты, карты</li>
+            </ul>
+            <p>Social networks are also supported:</p>
+            <ul>
+                <li><strong>youtube:</strong> y, yt, youtube, ютюб, ю, ютуб, ют</li>
+                <li><strong>reddit:</strong> r, reddit, р, реддит, редит</li>
+                <li><strong>x:</strong> x, tw, twitter, х, твитер, твиттер</li>
+                <li><strong>facebook:</strong> fb, facebook, фб, фейсбук</li>
+                <li><strong>pinterest:</strong> pin, pinterest, пин, пинтерест</li>
+                <li><strong>twitch:</strong> tv, twitch</li>
+                <li><strong>tiktok:</strong> tt, tiktok</li>
+            </ul>
+            <p>You can use AI to answer your questions:</p>
+            <ul>
+                <li><strong>ai:</strong> ai, ии, аи</li>
+                <li><strong>chatgpt:</strong> chatgpt, chat, gpt, чатгпт, чат, гпт</li>
+                <li><strong>claude:</strong> claude, cl, клод, кл</li>
+                <li><strong>perplexity:</strong> perplexity, перплексити</li>
+            </ul>
+            <p>You can also quickly translate text:</p>
+            <ul>
+                <li><strong>google translate:</strong> tr, translate, тр, переводчик</li>
+                <li><strong>deepl:</strong> deepl, дипл</li>
+            </ul>
+            <p>Also, there is support for torrent trackers and pirate libraries:</p>
+            <ul>
+                <li><strong>rutracker:</strong> rutracker, рутрекер</li>
+                <li><strong>rutor:</strong> rutor, рутор</li>
+                <li><strong>1337x:</strong> 1337, 1337x, 1337х</li>
+                <li><strong>flibusta:</strong> flib, flibusta, флиб, флибуста</li>
+                <li><strong>oceanofpdf:</strong> opdf, oceanofpdf</li>
+                <li><strong>kino.pub:</strong> kpub, kinopub, кпаб, кинопаб</li>
+            </ul>
+            <p>Some other useful searches:</p>
+            <ul>
+                <li><strong>wikipedia:</strong> w, wiki, wikipedia, в, вики, википедиа, википедия</li>
+                <li><strong>knowyourmeme:</strong> kym, meme, knowyourmeme</li>
+                <li><strong>urbandictionary:</strong> ud, urban, urbandictionary</li>
+                <li><strong>spotify:</strong> spotify</li>
+                <li><strong>soundcloud:</strong> sc, soundcloud</li>
+                <li><strong>imdb:</strong> imdb</li>
+                <li><strong>emojipedia:</strong> emoji, emojipedia</li>
+                <li><strong>kinopoisk:</strong> kino, kpoisk, kinopoisk, кино, кпоиск, кинопоиск</li>
+                <li><strong>weather:</strong> wthr, weather, погода</li>
+                <li><strong>IP lookup</strong> ip, айпи, ип (write "127.0.0.1 /ip" to get the geo info on your chosen IP)</li>
+            </ul>
+            <p>Stores and marketplaces:</p>
+            <ul>
+                <li><strong>g2a:</strong> g2a, г2а</li>
+                <li><strong>plati.market:</strong> plati, плати</li>
+                <li><strong>steam:</strong> steam, стим</li>
+                <li><strong>aliexpress:</strong> ali, aliexpress, али</li>
+                <li><strong>ozon:</strong> oz, ozon, озон</li>
+                <li><strong>wildberries:</strong> wb, wildberries, вб, вайлдберриз</li>
+                <li><strong>avito:</strong> av, avito, авито</li>
+                <li><strong>amazon:</strong> am, amazon</li>
+            </ul>
+            <p>Developer tools:</p>
+            <ul>
+                <li><strong>github:</strong> git, github</li>
+                <li><strong>stackoverflow:</strong> st, stack, stackoverflow</li>
+                <li><strong>mdn:</strong> mdn</li>
+                <li><strong>npm:</strong> npm</li>
+                <li><strong>pypi:</strong> pypi</li>
+            </ul>
+            <p>Useful tools:</p>
+            <ul>
+                <li><strong>wolframalpha:</strong> wa, wolfram</li>
+                <li><strong>wayback machine:</strong> archive, wayback</li>
+                <li><strong>openstreetmap:</strong> osm</li>
+            </ul>
+            <p>For designers:</p>
+            <ul>
+                <li><strong>flaticon:</strong> flaticon, icons</li>
+                <li><strong>fontawesome:</strong> fa, fontawesome</li>
+                <li><strong>unsplash:</strong> unsplash, photos</li>
+            </ul>
+            <p>And even some 18+ websites are supported:</p>
+            <ul>
+                <li><strong>pornolab:</strong> pl, plab, pornolab</li>
+                <li><strong>xvideos:</strong> xv, xvid, xvideos</li>
+                <li><strong>xnxx:</strong> xn, xnxx</li>
+                <li><strong>xhamster:</strong> xh, xham, xhamster</li>
+                <li><strong>pornhub:</strong> ph, phub, pornhub, пх, пхаб, порнхаб</li>
+                <li><strong>youporn:</strong> yp, yporn, youporn</li>
+                <li><strong>pornpics:</strong> pp, ppics, pornpics</li>
+                <li><strong>wikifeet:</strong> wf, feet, wikifeet</li>
+                <li><strong>pmvhaven:</strong> pmv, pmvhaven</li>
+                <li><strong>spankbang:</strong> spank, spankbang</li>
+            </ul>
+            <p><strong>Each command can be used with !, /, :, @ or - prefix.</strong> For example:</p>
+            <ul>
+                <li>!google or /google or -google or :google or @google</li>
+                <li>!youtube or /youtube or -youtube or :youtube or @youtube</li>
+                <li>!ai or /ai or -ai or :ai or @ai</li>
+            </ul>
+            <p>All these formats work the same way, so you can use whichever you prefer.</p>
+            <h3>All commands work as shortcuts without prefixes</h3>
+            <p>You can use all the commands listed above as direct shortcuts without any prefixes. Simply type the keyword and press Enter:</p>
+            <ul>
+                <li>Type <code>youtube</code> or <code>yt</code> to go directly to YouTube</li>
+                <li>Type <code>wiki</code> or <code>w</code> to go to Wikipedia</li>
+                <li>Type <code>ai</code> to use AI assistance</li>
+                <li>And so on with any other command</li>
+            </ul>
+            <p><strong>Extra social networks shortcuts:</strong></p>
+            <ul>
+                <li><code>vk</code>, <code>вк</code> - opens VK.com</li>
+                <li><code>ig</code>, <code>insta</code>, <code>instagram</code>, <code>иг</code>, <code>инста</code>, <code>инстаграм</code> - opens Instagram</li>
+                <li><code>li</code>, <code>linked</code>, <code>linkedin</code>, <code>ли</code>, <code>линкед</code>, <code>линкедин</code> - opens LinkedIn</li>
+            </ul>
+            <p><strong>Additional useful shortcuts:</strong></p>
+            <ul>
+                <li class="margin"><code>search</code>, <code>mysearch</code>, <code>поиск</code>, <code>поисковик</code> - returns to mysearch.one</li>
+                <li class="margin"><strong>🛜 IP lookup tool:</strong> Type <code>ip</code>, <code>my ip</code>, <code>myip</code>, <code>my ip address</code>, <code>what is my ip</code>, <code>what is my ip address</code>, <code>айпи</code>, <code>мой айпи</code>, <code>мой ip</code>, <code>какой у меня ip-адрес</code>, <code>какой у меня ip адрес</code>, <code>мой айпи адрес</code> to get your IP address. No prefixes needed.</li>
+                <li><strong>🍅Pomodoro timer:</strong> Type <code>pomodoro</code>, <code>pomodoro timer</code>, <code>pomo</code>, <code>pomotimer</code>, <code>помодоро</code>, <code>помодоро таймер</code>, <code>помо</code>, <code>помотаймер</code> to access the Pomodoro timer. No prefixes needed.</li>
+            </ul>
+            <p>There are two special settings you should know about:</p>
+            <ol>
+                <li class="margin">The "ai" shortcut by default redirects you to chatgpt.com, working as an alias for the "chatgpt" command. You can configure it to use "chatgpt", "claude", "perplexity", or your own AI instance like OpenWebUI. To use it with a custom AI, select the "custom" option in settings and provide your configuration.</li>
+                <li>You can always bypass the shortcut to a search engine, just add any bang. For example, <code>pomodoro</code> will redirect you to the Pomodoro timer, but <code>pomodoro /g</code> will search for "pomodoro" in Google.</li>
+            </ol>
+            <h2>How to add more bangs and shortcuts?</h2>
+            <p><strong>Unfortunately, there is no option to add new bangs/shortcuts or edit the existing ones at the moment.</strong></p>
+            <p>I'm working on this feature, but it probably would be under a paywall (a small one-time donation, not a subscribtion).</p>
+            <p>If you really want new bangs or shortcuts right now, you can contact me via <a href="https://t.me/fedorananin" target="_blank">Telegram</a> or <a href="https://www.linkedin.com/in/fedorananin/" target="_blank">LinkedIn</a>.</p>
+            <h2>Why is it more convenient than using Google/Bing/Yandex directly?</h2>
+            <p><strong>Because you have all of them through one simple interface!</strong></p>
+            <p>Unlike using a single search engine like Google, mysearch.one lets you choose from a variety of search services without switching tabs or websites.</p>
+            <p>Enjoy the streamlined, flexible search experience that mysearch.one provides, whether you need quick answers from familiar sources or innovative responses powered by neural networks.</p>
+            <h2>Why use AI directly from the search bar?</h2>
+            <p>Imagine you search for "how to cook oatmeal." With a traditional search engine, you might first have to read a long article about the history of oatmeal, learn about its benefits and drawbacks, and only then find a short note saying it needs to be boiled for 5–15 minutes. All that extra information can be overwhelming when you just want a simple answer.</p>
+            <p>A neural network, on the other hand, gives you a precise and ready answer without all the extra words. It tells you exactly what you need to know right away, and if something isn’t clear, you can ask follow-up questions in a chat format. This makes the whole process much more efficient and user-friendly.</p>
+            <p>That’s why mysearch.one lets you choose a neural network as your search engine. You can use ChatGPT, Claude, Perplexity, or OpenWebUI to get fast, clear answers tailored to your needs.</p>
+            <h2>Is it safe?</h2>
+            <p>mysearch.one has no access to your personal data. It doesn't require any kind of authentication or payment to use the service. The author doesn't hide his face ;)</p>
+            <h2>Is it free?</h2>
+            <p><strong>Yes!</strong> It is absolutely free. The basic functionality will always be free.</p>
+            <h2>Is it open source?</h2>
+            <p><strong>Yes!</strong> Here's the code — <a href="https://github.com/fedorananin/mysearch.one" target="_blank">GitHub</a></p>
+        </div>

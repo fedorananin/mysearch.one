@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>mysearch.one</ShortName>
+  <Description>mysearch.one: the all-in-one search engine</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="512" height="512" type="image/png">https://mysearch.one/favicon.png</Image>
+  <Url type="text/html" method="GET" template="https://mysearch.one/?q={searchTerms}"/>
+  <Url type="application/x-suggestions+json" method="GET" template="https://search.brave.com/api/suggest?q={searchTerms}"/>
+</OpenSearchDescription>

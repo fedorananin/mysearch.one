@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# If domain is NOT mysearch.one, redirect
+RewriteCond %{HTTP_HOST} !^mysearch\.one$ [NC]
+RewriteRule ^(.*)$ https://mysearch.one/$1 [R=301,L]
+
+# Disable directory listing
+Options -Indexes
+
+# Deny direct access to md and txt files
+<FilesMatch "\.(md|txt)$">
+    Require all denied
+</FilesMatch>

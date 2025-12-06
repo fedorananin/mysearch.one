@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mysearch.one</title>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <script src="https://cloud.umami.is/script.js" data-website-id="99e24bb6-9edd-4ab9-a040-b30607ed8b59" data-tag="search"></script>
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="mysearch.one">
+    <meta property="og:description" content="A versatile search tool that brings together multiple search engines and neural services in one place.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mysearch.one/">
+    <meta property="og:image" content="https://mysearch.one/favicon.png">
+    <meta property="og:site_name" content="mysearch.one">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="mysearch.one">
+    <meta name="twitter:description" content="A versatile search tool that brings together multiple search engines and neural services in one place.">
+    <meta name="twitter:image" content="https://mysearch.one/favicon.png">
+
+    <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="mysearch.one">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #191919;
+            color: #d4d4d4;
+            font-family: system-ui, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 400;
+            font-size: 17px;
+        }
+        .container {
+            text-align: center;
+            padding: 8px;
+            max-width: 640px;
+            width:100%;
+        }
+        h1 {
+            font-size: 3.5rem;
+            margin-top:4px;
+            margin-bottom: 8px;
+            font-weight: 900;
+        }
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+        h2.subtitle{
+            margin-top:0;
+            margin-bottom:48px;
+            font-weight: 500;
+        }
+        h3 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+        h1 > a {
+            color:inherit;
+            text-decoration: none;
+        }
+        h1 > a:hover {
+            color:inherit;
+            text-decoration: none;
+        }
+        .search-input, input[type="text"], select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1.1rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background-color: #252525;
+            color: #d4d4d4;
+            outline: none;
+            transition: all 0.3s ease;
+            display: block;
+        }
+        .search-input:focus, input[type="text"]:focus, select:focus {
+            border-color: #4d4d4d;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        input[type="text"]:disabled,
+        input[type="text"][readonly] {
+            opacity: 0.7;
+            background-color: #2a2a2a;
+            border-color: #333;
+        }
+        input[type="text"][readonly] {
+            cursor:copy;
+        }
+        button[type="submit"], input[type="submit"] {
+            background-color: #333;
+            color: #d4d4d4;
+            border: 1px solid #4d4d4d;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 16px;
+        }
+        button[type="submit"]:hover, input[type="submit"]:hover {
+            background-color: #444;
+            border-color: #666;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background-color: #333;
+            margin: 32px 0;
+            opacity: 0.7;
+            width: 100%;
+        }
+        p,ul {
+            margin-bottom:16px;
+        }
+        .text {
+            text-align: left;
+        }
+        a {
+            color: #8ab4f8;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+        }
+        a:hover {
+            color: #aecbfa;
+            text-decoration: underline;
+        }
+        .opacity {
+            opacity: 0.7;
+        }
+        p.settings{
+            opacity: 1;
+            font-size: 0.9rem;
+            text-align: right;
+            margin-bottom:8px;
+            margin-right:4px;
+        }
+        p.tip{
+            margin-top:8px;
+            opacity:0.7;
+            font-size: 0.8rem;
+        }
+        img {
+            display:block;
+            margin:16px auto;
+            width:100%;
+            max-width:96px;
+        }
+        code {
+            font-family: monospace;
+            background-color: #2d2d2d;
+            color: #e6e6e6;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            border: 1px solid #444;
+        }
+        
+        pre {
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 16px 0;
+            line-height: 1.4;
+        }
+        
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border: none;
+            display: block;
+            color: #e6e6e6;
+        }
+        button.youtube, a.youtube {
+            display: inline-block;
+            background-color: #8B0000;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 8px 0;
+        }
+        
+        button.youtube:hover, a.youtube:hover {
+            background-color: #660000;
+            text-decoration: none;
+        }
+        
+        button.youtube:before, a.youtube:before {
+            content: "▶ ";
+            font-size: 0.9em;
+            margin-right: 4px;
+        }
+
+        summary {
+            cursor:pointer;
+        }
+        li.margin{
+            margin-bottom:8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="favicon.png">
+        <h1><a href="/">mysearch.one</a></h1>
+        <h2 class="subtitle">All-in-one search engine</h2>
+        <form id="search-form" class="search-form" action="/" method="get">
+            <p class="settings"><a href="/?mode=howitworks" title="Learn how it works and get the list of all the bangs and shortcuts">🤔 How it works?</a> <a href="/?mode=settings">⚙️ Settings</a></p>
+            <input type="search" list="search-box-list" name="q" id="search-box" class="search-input" placeholder="Search..." autocomplete="off" autofocus>
+            <datalist id="search-box-list">
+                <option value="pomodoro timer">pomodoro timer</option>
+                <option value="my ip address">my ip address</option>
+                <option value="youtube">youtube</option>
+                <option value="google">google</option>
+                <option value="yandex">yandex</option>
+            </datalist>
+            <p class="tip"><span>Type <code>funny cats !youtube</code> to search in 🐈 YouTube.</span></p>
+        </form>
+        <!--<p><a href="/" class="youtube">Watch the video explainer</a></p>-->
+        ###html###
+        <hr>
+        <p><span class="opacity"><a href="https://ip.mysearch.one" target="_blank">🌐 My IP</a> <a href="https://pomodoro.mysearch.one" target="_blank">🍅 Pomodoro</a></span><br><small>© 2025 ⁃ Made by <a href="https://www.linkedin.com/in/fedorananin/" target="_blank">Fёdor Ananin</a></small></p>
+    </div>
+
+    <script>
+        function copyToClipboard(text){
+            if(navigator.clipboard){
+                navigator.clipboard.writeText(text)
+                return //codes below wont be executed
+            }
+            const textArea = document.createElement("textarea")
+            textArea.value = text
+            document.body.appendChild(textArea)
+            textArea.focus()
+            textArea.select()
+            document.execCommand('copy')
+            document.body.removeChild(textArea)
+        }
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyElements = document.querySelectorAll('.copycopy');
+        
+        copyElements.forEach(function(element) {
+            element.addEventListener('click', function() {
+                // Get the value from the input
+                const textToCopy = this.value;
+                copyToClipboard(textToCopy);
+                // Show visual feedback that text was copied
+                const originalValue = this.value;
+                const originalBgColor = this.style.backgroundColor;
+                
+                // Change appearance to indicate success
+                this.value = "Copied!";
+                this.style.backgroundColor = "#4CAF50"; // Green background
+                
+                // Reset back to original state after a short delay
+                setTimeout(() => {
+                    this.value = originalValue;
+                    this.style.backgroundColor = originalBgColor;
+                }, 1000); // Reset after 1 second
+            });
+        });
+    });
+    // Tip rotation script
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipSpan = document.querySelector('p.tip span');
+        if (!tipSpan) return;
+        
+        // Array of tip messages
+        const tips = [
+            'Type <code>funny cats !youtube</code> to search in 🐈 YouTube.',
+            'Use <code>!ai</code> at the end to ask AI assistants 🤖.',
+            'Try 🔍 <code>!g</code> for Google, <code>!b</code> for Bing, <code>!y</code> for Yandex.',
+            'Add <code>!gmaps</code>, <code>/gmaps</code>, <code>-gmaps</code>, <code>:gmaps</code>, or <code>@gmaps</code> to search in 🗺️ Google Maps.',
+            'Type <code>my ip</code> to check your 🛜 IP address.',
+            'Type <code>pomodoro</code> to open the 🍅 Pomodoro timer.',
+            'You can change the default search engine on the ⚙️ "Settings" page.'
+        ];
+        
+        let currentTipIndex = 0;
+        
+        // Function to update the tip text
+        function rotateTip() {
+            currentTipIndex = (currentTipIndex + 1) % tips.length;
+            tipSpan.innerHTML = tips[currentTipIndex];
+        }
+        
+        // Set interval to change tip every 5 seconds
+        setInterval(rotateTip, 5000);
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+            const searchBox = document.getElementById("search-box");
+            const dataList = document.getElementById("search-box-list");
+            const searchForm = document.getElementById("search-form");
+            let debounceTimer;
+            let selectedFromDatalist = false; // Flag for selection from list
+
+            // Fill lastSuggestions with predefined values
+            let lastSuggestions = Array.from(dataList.options).map(option => option.value);
+
+            // Track clicks on suggestions (PC only)
+            dataList.addEventListener("mousedown", () => {
+                selectedFromDatalist = true;
+            });
+
+            // Also track manual input (this triggers on TAP)
+            searchBox.addEventListener("input", () => {
+                selectedFromDatalist = lastSuggestions.includes(searchBox.value);
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    fetchSuggestions(searchBox.value);
+                }, 300);
+            });
+
+            // If switched after selection (means clicked/tapped)
+            searchBox.addEventListener("change", () => {
+                if (selectedFromDatalist) {
+                    searchForm.submit(); // Submit the form ✅
+                }
+                selectedFromDatalist = false; // Reset the flag
+            });
+
+            function fetchSuggestions(query) {
+                if (query.trim() === "") {
+                    dataList.innerHTML = "";
+                    lastSuggestions = [];
+                    return;
+                }
+
+                fetch(`suggestions.php?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        lastSuggestions = data[1] || []; // Update suggestions list
+                        populateDatalist(lastSuggestions);
+                    })
+                    .catch(error => console.error("Error loading data:", error));
+            }
+
+            function populateDatalist(suggestions) {
+                dataList.innerHTML = "";
+                suggestions.forEach(suggestion => {
+                    dataList.innerHTML += `<option value="${suggestion}">${suggestion}</option>`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
