@@ -459,7 +459,13 @@
             $ai_link=$bangs[$ai_provider];
             $link=str_replace('{{{ai_link}}}', $ai_link, $link);
         }
-        $link=str_replace('{{{s}}}', urlencode($q), $link);
+        
+        if ($bang == 'unsplash' || $bang == 'photos') {
+            $q_unsplash = str_replace(' ', '-', $q);
+            $link=str_replace('{{{s}}}', urlencode($q_unsplash), $link);
+        } else {
+            $link=str_replace('{{{s}}}', urlencode($q), $link);
+        }
 
         $shortcuts=[];
         foreach($bangs as $k=>$v){
