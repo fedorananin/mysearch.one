@@ -69,6 +69,7 @@
                 <li><strong>pinterest:</strong> pin, pinterest, пин, пинтерест</li>
                 <li><strong>twitch:</strong> tv, twitch</li>
                 <li><strong>tiktok:</strong> tt, tiktok</li>
+                <li><strong>instagram:</strong> ig, insta, instagram, иг, инста, инстаграм</li>
             </ul>
             <p>You can use AI to answer your questions:</p>
             <ul>
