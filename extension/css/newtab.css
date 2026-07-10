@@ -223,12 +223,15 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
 .card:hover .tile { transform: scale(1.07); }
 .card:active .tile { transform: scale(.97); }
 
-/* Favicons fill the tile edge to edge — icons with their own background
-   color would otherwise sit in an ugly inset. */
+/* Favicons fill the tile edge to edge by default — icons with their own
+   background color look best that way. Transparent-background icons look
+   better with a bit of inset: --tile-pad (a % of the tile side, so it scales
+   down in the quick launch bar too). */
 .tile img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  padding: var(--tile-pad, 0%);
   -webkit-user-drag: none;
 }
 .tile .glyph { width: 50%; height: 50%; opacity: .9; }
@@ -454,4 +457,4 @@ body.popup .card .label { font-size: 11px; }
 #dlg button.primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
 #dlg button:hover { filter: brightness(1.15); }
 #dlg .iconoptions { display: flex; flex-direction: column; gap: 10px; }
-#dlg .iconoptions label.opt { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+#dlg label.opt { display: flex; align-items: center; gap: 10px; cursor: pointer; }

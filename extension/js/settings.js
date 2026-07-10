@@ -26,6 +26,7 @@ export const DEFAULTS = {
   tileBgColor: '#2b2f36',
   borderWidth: 0,                          // px
   borderColor: '#3c4043',
+  iconPadding: 12,                         // inset size, % of tile side; applied per-card (icon dialog)
 
   themeMode: 'custom',                     // custom (colors below) | auto (system light/dark)
   pageBg: '#1d1f24',

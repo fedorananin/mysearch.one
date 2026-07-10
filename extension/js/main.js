@@ -64,6 +64,7 @@ function applyTheme() {
   css.setProperty('--tile-radius', s.tileRadius + '%');
   css.setProperty('--border-width', s.borderWidth + 'px');
   css.setProperty('--border-color', s.borderColor);
+  css.setProperty('--tile-pad', s.iconPadding + '%');
   css.setProperty('--bg-image', state.bgImage ? `url("${state.bgImage}")` : 'none');
   // Fixed side/bottom bars make no sense inside a 420px popup.
   document.body.dataset.quickpos = IS_POPUP ? 'top' : s.quickPosition;

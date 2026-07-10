@@ -184,6 +184,7 @@ async function openPanel(state) {
   ));
   bgColorRow = row('Card color', color(s.tileBgColor, (v) => (s.tileBgColor = v)));
   syncColorRow();
+  row('Icon padding', range(0, 25, s.iconPadding, (v) => (s.iconPadding = v)));
   row('Border width', range(0, 4, s.borderWidth, (v) => (s.borderWidth = v)));
   row('Border color', color(s.borderColor, (v) => (s.borderColor = v)));
 

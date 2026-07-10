@@ -182,10 +182,45 @@ export async function initIconCache() {
   }
 }
 
-function cachePut(key, value) {
-  iconCache[key] = { v: value, ts: Date.now() };
+function flushCache() {
   clearTimeout(flushTimer);
   flushTimer = setTimeout(() => chrome.storage.local.set({ [CACHE_KEY]: iconCache }), 800);
+}
+
+// a: 1 = icon has transparent pixels (render inset), 0 = fully opaque
+// (render edge to edge), undefined = not analyzed yet.
+function cachePut(key, value, a) {
+  iconCache[key] = { v: value, ts: Date.now(), ...(a !== undefined && { a }) };
+  flushCache();
+}
+
+// Does the image contain meaningful transparency? Sampled at 32x32; >2% of
+// transparent pixels counts (catches rounded-corner icons, ignores stray
+// antialiasing). Same-origin/data: URLs only — the canvas must stay readable.
+function hasAlpha(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onerror = () => resolve(false);
+    img.onload = () => {
+      try {
+        const size = 32;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+        let transparent = 0;
+        for (let i = 3; i < data.length; i += 4) {
+          if (data[i] < 128) transparent++;
+        }
+        resolve(transparent > size * size * 0.02);
+      } catch {
+        resolve(false);
+      }
+    };
+    img.src = src;
+  });
 }
 
 function blobToDataUrl(blob) {
@@ -253,15 +288,15 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   const url = bookmark.url || '';
   const label = bookmark.title || domainOf(url) || url;
 
-  // Folders have no URL, so their custom icons are keyed by bookmark id
-  // (fine: customIcons live in storage.local, which is per-device anyway,
-  // and ids are stable within a profile).
   const custom = customIcons[iconKeyFor(bookmark)];
   if (custom?.type === 'emoji') {
     tile.appendChild(textEl(custom.value));
     return;
   }
   if (custom?.type === 'image') {
+    // User-uploaded images are shown as-is: no auto padding (fileToIcon
+    // letterboxing would otherwise trigger the transparency heuristic).
+    tile.style.setProperty('--tile-pad', '0%');
     const img = document.createElement('img');
     img.src = custom.value;
     img.alt = '';
@@ -299,6 +334,17 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   img.alt = '';
   tile.appendChild(img);
 
+  // Auto padding: icons with transparency render inset (--tile-pad from the
+  // global setting), fully opaque icons fill the tile edge to edge. Pointless
+  // when the tile itself is transparent — there is no card to clash with.
+  const tileHasBg =
+    (bookmark.url ? settings.siteTileBg : settings.folderTileBg) !== 'transparent';
+  const setPad = (on) => {
+    if (on && tileHasBg) tile.style.removeProperty('--tile-pad');
+    else tile.style.setProperty('--tile-pad', '0%');
+  };
+  setPad(false); // edge to edge until we know better
+
   const showLetter = () => {
     img.remove();
     tile.style.background = colorFor(domain || label);
@@ -307,6 +353,8 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   const showLocal = () => {
     img.onerror = showLetter;
     img.src = faviconCacheUrl(url, 64);
+    // The browser cache icon changes between visits — analyze on every render.
+    hasAlpha(img.src).then(setPad);
   };
 
   if (!useExternal) {
@@ -315,16 +363,33 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   }
 
   const entry = iconCache[url];
-  if (entry?.v === FALLBACK) showLocal();
-  else if (entry?.v) img.src = entry.v;
+  if (entry?.v === FALLBACK) {
+    showLocal();
+  } else if (entry?.v) {
+    img.src = entry.v;
+    if (entry.a === undefined) {
+      // Cached before transparency analysis existed — analyze once, persist.
+      hasAlpha(entry.v).then((a) => {
+        setPad(a);
+        entry.a = a ? 1 : 0;
+        flushCache();
+      });
+    } else {
+      setPad(!!entry.a);
+    }
+  }
 
   if (entry && Date.now() - entry.ts < REFRESH_AFTER) return;
 
   // No cache entry (first sighting) or a stale one — resolve in background.
   fetchExternalIcon(url)
-    .then((dataUrl) => {
-      cachePut(url, dataUrl);
-      if (img.isConnected && img.src !== dataUrl) img.src = dataUrl;
+    .then(async (dataUrl) => {
+      const a = (await hasAlpha(dataUrl)) ? 1 : 0;
+      cachePut(url, dataUrl, a);
+      if (img.isConnected) {
+        if (img.src !== dataUrl) img.src = dataUrl;
+        setPad(!!a);
+      }
     })
     .catch(() => {
       // Only remember the failure when we're sure it's "nothing there", not a
