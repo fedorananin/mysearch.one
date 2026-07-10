@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "MySearch.one — Start Page & Speed Dial",
+  "short_name": "MySearch.one",
+  "version": "0.1.0",
+  "description": "A start page built from your bookmarks + mysearch.one search. No tracking, no database — only what your browser already has.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["bookmarks", "storage", "favicon", "contextMenus", "tabGroups"],
+  "background": {
+    "service_worker": "js/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MySearch.one",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "host_permissions": [
+    "https://search.brave.com/*",
+    "https://t3.gstatic.com/*",
+    "https://icons.duckduckgo.com/*"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "chrome_settings_overrides": {
+    "search_provider": {
+      "name": "mysearch.one",
+      "keyword": "mysearch",
+      "favicon_url": "https://mysearch.one/favicon.png",
+      "search_url": "https://mysearch.one/?q={searchTerms}",
+      "suggest_url": "https://search.brave.com/api/suggest?q={searchTerms}",
+      "encoding": "UTF-8",
+      "is_default": true
+    }
+  }
+}

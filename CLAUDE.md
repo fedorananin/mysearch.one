@@ -4,6 +4,10 @@
 
 **mysearch.one** is a lightweight PHP-based search aggregator and redirect tool. It functions similarly to DuckDuckGo's "bang" system, allowing users to direct their queries to specific search engines or services (like Google, Yandex, YouTube, Reddit, ChatGPT) using short prefixes or suffixes (e.g., `!g`, `/yt`, `@ai`).
 
+The repository contains two deliverables:
+*   The **website** (PHP, repo root) — the search redirector itself.
+*   The **browser extension** (`extension/`) — a bookmarks-based new tab / speed dial page with mysearch.one as the built-in search. Currently **unpublished**; it is loaded in developer mode only ("Load unpacked").
+
 **Core Philosophy:**
 *   **Not a Search Engine:** It does not crawl the web or index content. It redirects queries.
 *   **Privacy:** No user tracking, no database. Settings are stored in client-side cookies.
@@ -55,6 +59,37 @@ There is no backend database. User preferences (like default search engine or AI
     *   `default_bang`: The default service used if no bang is specified.
     *   `ai_provider`: The chosen AI service (ChatGPT, Claude, Perplexity, Custom).
     *   `ai_model`, `ai_domain`: Settings for custom OpenWebUI instances.
+
+## Browser Extension (`extension/`)
+
+A Manifest V3 extension for Chromium browsers (Chrome, Edge). Plain ES modules, **no build step, no frameworks** — the folder is loaded as-is via `chrome://extensions` → Developer mode → "Load unpacked". **Not published to any extension store yet.**
+
+### Concept
+Bookmarks are the single source of truth: a chosen bookmarks folder is rendered as the new tab start page (grid of cards), a second optional folder becomes a favicon-only "quick launch" bar. Sync, backups, and hierarchy come for free from the browser's bookmark engine. The search box and the omnibox default search both go straight to `https://mysearch.one/?q=...` — the extension does not reimplement any bang logic.
+
+### Files
+*   **`manifest.json`** — overrides the new tab, registers mysearch.one as the default search provider (`chrome_settings_overrides`; note: `favicon_url` must be an absolute URL despite what MV3 docs say), declares the background service worker and toolbar popup.
+*   **`newtab.html` / `popup.html`** — same modules, two shells; `popup.html` sets `body.popup` (compact layout, links open in a new tab and close the popup).
+*   **`js/main.js`** — state, rendering (grid, drill-down with breadcrumbs or sections mode, quick launch bar), theme application, card context menu, tab-group opening, external link drop.
+*   **`js/settings.js`** — defaults + storage helpers + custom icon stores (migration, rename-follow, dead-key cleanup).
+*   **`js/icons.js`** — favicon resolution cascade and the persistent icon cache; internal-page glyphs; emoji/text tile scaling (canvas-measured).
+*   **`js/bookmarks.js`** — `chrome.bookmarks` wrappers; folder refs are stored as `{id, path}` because bookmark IDs are not stable across synced devices (path of titles is the fallback).
+*   **`js/search.js`** — search box; suggestions fetched from Brave **directly** (host permission bypasses CORS, unlike the website which needs `suggestions.php`).
+*   **`js/dnd.js`** — card drag & drop, written back via `bookmarks.move`.
+*   **`js/menu.js`** — context menu + `<dialog>` helpers (edit, icon picker with emoji/text/image/local-favicon options).
+*   **`js/settingsui.js`** — the settings slide-over panel.
+*   **`js/background.js`** — service worker: "Add to start page" context menu on pages/links.
+
+### Key mechanics (learned the hard way — do not regress)
+*   **Favicon cascade**: custom icon → internal-page glyph → Google `faviconV2` (128px, regular domains) / DuckDuckGo `icons.duckduckgo.com` (subdomains — Google collapses subdomains into one icon, DDG does not) → browser favicon cache (`_favicon/`, the only source that sees dynamic JS-drawn favicons) → generated letter tile. Every external response is validated by decoding (DDG can return text garbage with HTTP 200).
+*   **Icon cache**: resolved external icons are stored as data URLs in `storage.local` (`iconCacheV2`) so new tabs paint instantly without flicker; background revalidation after 7 days, eviction after 30.
+*   **Custom icons**: emoji/text/"browser icon" choices live in `storage.sync` (`syncIcons`), uploaded images in `storage.local` (`customIcons`) — sync quotas (8 KB/item, 100 KB total) don't fit images. Keys: sites by URL, folders by `folder:<title>` (titles are cross-device stable, IDs are not). Newer timestamp wins on conflict. Renames/URL edits through our UI move the key; opening the settings panel sweeps orphaned keys.
+*   **Settings object identity**: `state.settings` is updated **in place** (`Object.assign`) on `storage.onChanged` — the settings panel and search module hold references to it; replacing the object silently breaks live settings (this was a real bug).
+*   **Internal browser pages**: `chrome://` URLs can only be opened via `chrome.tabs.update/create`; `chrome://` ↔ `edge://` mapping lives in `icons.js` (`EDGE_MAP`, e.g. passwords → `edge://wallet/passwords`).
+
+### Known caveats
+*   Edge may be hostile to `chrome_settings_overrides.search_provider` for store-installed extensions; works when sideloaded.
+*   Chrome Web Store's "single purpose" policy may question the new-tab + search-provider combo — to be resolved at publication time.
 
 ## Development Conventions
 

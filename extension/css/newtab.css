@@ -1,0 +1,457 @@
+/* All user-tunable values arrive as CSS variables set by main.js. */
+:root {
+  --page-bg: #1d1f24;
+  --text-color: #e8eaed;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --icon-size: 72px;
+  --grid-gap: 16px;
+  --tile-radius: 24%;
+  --tile-bg: #2b2f36;
+  --border-width: 0px;
+  --border-color: #3c4043;
+  --muted: color-mix(in srgb, var(--text-color) 55%, transparent);
+  --panel-bg: color-mix(in srgb, var(--page-bg) 85%, #fff 6%);
+  --hover-bg: color-mix(in srgb, var(--text-color) 10%, transparent);
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100vh; margin: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--page-bg) var(--bg-image, none) center / cover no-repeat fixed;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+body[data-quickpos="bottom"] { flex-direction: column-reverse; }
+body[data-quickpos="left"]   { flex-direction: row; }
+body[data-quickpos="right"]  { flex-direction: row-reverse; }
+
+/* ---------- Quick launch bar ---------- */
+
+#quickbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px;
+  flex-shrink: 0;
+}
+/* Side and bottom bars are fixed to the viewport edge so the main content
+   stays centered instead of being pushed aside. */
+body[data-quickpos="left"] #quickbar,
+body[data-quickpos="right"] #quickbar {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  padding: 20px 12px;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 20;
+}
+body[data-quickpos="left"] #quickbar { left: 0; }
+body[data-quickpos="right"] #quickbar { right: 0; }
+body[data-quickpos="bottom"] #quickbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
+body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
+/* On narrow windows keep the grid clear of the fixed side bars; on wide
+   screens the centered content never reaches them. */
+@media (max-width: 1360px) {
+  body[data-quickpos="left"] #content { padding-left: 76px; }
+  body[data-quickpos="right"] #content { padding-right: 76px; }
+}
+/* When positioned "top", the bar lives inside the main column between the
+   search box and the grid. */
+#content > #quickbar { padding: 0 0 40px; }
+
+#quickbar .tile {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+#quickbar .tile:hover { transform: scale(1.18); }
+#quickbar .tile .letter { font-size: 15px; }
+#quickbar .tile .emoji { font-size: calc(32px * var(--emoji-scale, .78)); }
+
+/* ---------- Main column ---------- */
+
+#content {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 6vh 32px 80px;
+  min-width: 0;
+}
+
+/* ---------- Search ---------- */
+
+#searchform { margin: 0 auto 6vh; max-width: 640px; }
+
+.searchbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.searchicon {
+  position: absolute;
+  left: 16px;
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+  pointer-events: none;
+}
+#searchinput {
+  width: 100%;
+  padding: 14px 20px 14px 48px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--text-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
+  border-radius: 28px;
+  outline: none;
+}
+#searchinput:focus {
+  background: color-mix(in srgb, var(--text-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
+}
+#searchinput::placeholder { color: var(--muted); }
+
+#suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: var(--panel-bg);
+  border: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / .35);
+  z-index: 30;
+  backdrop-filter: blur(12px);
+}
+#suggestions li {
+  padding: 8px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#suggestions li:hover,
+#suggestions li.active { background: var(--hover-bg); }
+
+/* ---------- Breadcrumbs ---------- */
+
+#breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+#breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#breadcrumbs a:hover { background: var(--hover-bg); color: var(--text-color); }
+#breadcrumbs .current { padding: 4px 8px; color: var(--text-color); font-weight: 600; }
+#breadcrumbs .sep { opacity: .5; }
+
+/* ---------- Grid & cards ---------- */
+
+#grid.sections { display: block; }
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin: 34px 4px 16px;
+}
+.section-title:first-child { margin-top: 0; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--icon-size) + 32px), 1fr));
+  gap: calc(var(--grid-gap) + 10px) var(--grid-gap);
+  justify-items: center;
+}
+
+/* Card = icon tile + separate label below (no shared frame). */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: calc(var(--icon-size) + 32px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.tile {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border-radius: var(--tile-radius);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--tile-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform .12s ease;
+  flex-shrink: 0;
+}
+.card:hover .tile { transform: scale(1.07); }
+.card:active .tile { transform: scale(.97); }
+
+/* Favicons fill the tile edge to edge — icons with their own background
+   color would otherwise sit in an ugly inset. */
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+}
+.tile .glyph { width: 50%; height: 50%; opacity: .9; }
+.tile.is-folder { color: color-mix(in srgb, var(--text-color) 75%, transparent); }
+.tile .letter {
+  font-size: calc(var(--icon-size) * .42);
+  font-weight: 600;
+  color: #fff;
+}
+.tile .emoji {
+  font-size: calc(var(--icon-size) * var(--emoji-scale, .78));
+  line-height: 1.15;
+  text-align: center;
+  white-space: pre-line;
+  max-width: 94%;
+  font-weight: 600;
+}
+
+.card .label {
+  font-size: 13px;
+  max-width: 100%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.no-labels .card .label { display: none; }
+body.no-labels .cards { gap: var(--grid-gap); }
+
+/* Drag & drop feedback */
+.card.dragging { opacity: .35; }
+.card.drop-before .tile { box-shadow: -14px 0 0 -6px #3b82f6; }
+.card.drop-after .tile { box-shadow: 14px 0 0 -6px #3b82f6; }
+.card.drop-into .tile { outline: 3px solid #3b82f6; outline-offset: 3px; }
+
+#emptyhint {
+  text-align: center;
+  color: var(--muted);
+  margin-top: 10vh;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ---------- Toolbar popup (popup.html, body.popup) ---------- */
+
+html:has(body.popup) { min-height: 0; }
+body.popup {
+  min-height: 0;
+  width: 420px;
+  max-height: 580px;
+  overflow-y: auto;
+}
+body.popup #content { padding: 16px 16px 24px; max-width: none; }
+body.popup #searchform { margin: 0 0 16px; }
+body.popup #searchinput { font-size: 14px; padding: 10px 16px 10px 42px; }
+body.popup #quickbar { padding: 0 0 16px; }
+body.popup .cards { gap: 14px 8px; }
+body.popup .card .label { font-size: 11px; }
+
+/* ---------- Settings button & panel ---------- */
+
+#settingsbtn {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+#settingsbtn svg { width: 24px; height: 24px; }
+#settingsbtn:hover { color: var(--text-color); background: var(--hover-bg); }
+
+#settingspanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 92vw);
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  border-left: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  box-shadow: -12px 0 40px rgb(0 0 0 / .3);
+  padding: 24px 26px 40px;
+  overflow-y: auto;
+  z-index: 50;
+  font-size: 14px;
+}
+#settingspanel h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#settingspanel h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin: 28px 0 10px;
+}
+#settingspanel .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+}
+#settingspanel .row > label:first-child { flex: 1; }
+#settingspanel select,
+#settingspanel input[type="text"] {
+  font: inherit;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--text-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+  border-radius: 8px;
+  padding: 6px 10px;
+  max-width: 200px;
+}
+#settingspanel input[type="range"] { width: 130px; }
+#settingspanel input[type="color"] {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+#settingspanel button.small {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+}
+#settingspanel button.small:hover { background: var(--hover-bg); }
+#closesettings {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+#closesettings:hover { color: var(--text-color); }
+
+/* ---------- Context menu ---------- */
+
+#ctxmenu {
+  position: fixed;
+  z-index: 60;
+  min-width: 200px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 10px 34px rgb(0 0 0 / .4);
+  padding: 6px;
+  font-size: 14px;
+}
+#ctxmenu .item {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#ctxmenu .item:hover { background: var(--hover-bg); }
+#ctxmenu .item.danger:hover { background: rgb(220 60 60 / .25); }
+#ctxmenu hr {
+  border: none;
+  border-top: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  margin: 6px 4px;
+}
+
+/* ---------- Dialogs ---------- */
+
+#dlg {
+  border: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  border-radius: 16px;
+  background: var(--panel-bg);
+  color: var(--text-color);
+  font-family: var(--font);
+  padding: 24px 26px;
+  min-width: 340px;
+  max-width: 90vw;
+}
+#dlg::backdrop { background: rgb(0 0 0 / .45); backdrop-filter: blur(2px); }
+#dlg h3 { margin: 0 0 16px; font-size: 16px; }
+#dlg .field { margin-bottom: 14px; }
+#dlg .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+#dlg input[type="text"], #dlg select {
+  width: 100%;
+  font: inherit;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--text-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+#dlg .buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+#dlg button {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+  background: transparent;
+  color: var(--text-color);
+}
+#dlg button.primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+#dlg button:hover { filter: brightness(1.15); }
+#dlg .iconoptions { display: flex; flex-direction: column; gap: 10px; }
+#dlg .iconoptions label.opt { display: flex; align-items: center; gap: 10px; cursor: pointer; }

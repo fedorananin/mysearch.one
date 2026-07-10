@@ -55,6 +55,30 @@ You can use any of these prefixes interchangeably: `!`, `/`, `-`, `:`, `@`.
 
 *See the full list on the [How it works](https://mysearch.one/?mode=howitworks) page.*
 
+## 🧩 Browser Extension — Start Page & Speed Dial
+
+The repository also ships a companion **browser extension** (in the [`extension/`](extension/) folder) for Chromium browsers (Chrome, Edge): a new tab page built entirely from your bookmarks, with mysearch.one as the built-in search.
+
+> ⚠️ **Not published yet.** The extension is not available in any extension store. For now it can only be installed in developer mode (see below).
+
+### Features
+*   **Bookmarks as the source of truth** — pick a bookmarks folder and it becomes your start page. Sync between devices, backups, and folder hierarchy come for free from the browser.
+*   **Quick launch bar** — a second folder shown as a compact favicon-only strip (top / bottom / left / right).
+*   **Sharp favicons** — fetched from Google (regular domains) and DuckDuckGo (subdomains), cached locally for instant, flicker-free loading; letter tiles as a fallback.
+*   **Custom icons** — per-bookmark emoji, auto-scaled text badges, or uploaded images. Emoji/text choices sync between devices.
+*   **Full management in place** — drag & drop reordering (written back to bookmarks), context-menu editing, folder drill-down with breadcrumbs or a sections view.
+*   **Browser internal pages** — bookmark `chrome://` pages (passwords, bookmarks, history...) and they actually open, with automatic `chrome://` ↔ `edge://` mapping.
+*   **Open a folder as a tab group** — one click turns a bookmarks folder into a named, colored tab group.
+*   **"Add to start page"** — right-click any page or link to bookmark it straight into your grid or quick launch bar.
+*   **mysearch.one everywhere** — the search box (with Brave-powered suggestions) and the browser's default search both route through mysearch.one, so all bangs work out of the box.
+*   **Customization** — themes (custom colors or auto light/dark), icon size, spacing, card shapes from square to circle, backgrounds, fonts, and a toolbar popup mini-dial.
+
+### Install (developer mode)
+1.  Clone this repository (or download it).
+2.  Open `chrome://extensions` (or `edge://extensions`) and enable **Developer mode**.
+3.  Click **Load unpacked** and select the `extension/` folder.
+4.  Confirm the new tab / search engine prompts. Open a new tab — done. Settings live behind the gear button in the corner.
+
 ## ⚙️ Installation (Self-Hosting)
 
 You can easily host your own instance of mysearch.one.
