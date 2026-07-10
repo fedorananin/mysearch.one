@@ -196,6 +196,9 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
 }
 
 /* Card = icon tile + separate label below (no shared frame). */
+/* NOTE: no -webkit-user-drag: none here — it would silently disable the
+   card's own drag & drop (dragstart never fires despite draggable=true).
+   The img inside the tile has it instead, to suppress ghost image drags. */
 .card {
   display: flex;
   flex-direction: column;
@@ -204,7 +207,6 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
   width: calc(var(--icon-size) + 32px);
   cursor: pointer;
   user-select: none;
-  -webkit-user-drag: none;
 }
 
 .tile {

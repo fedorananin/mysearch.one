@@ -64,10 +64,10 @@ export function bindCardDnd(card, node, parentId, index) {
       if (zone === 'into') {
         await chrome.bookmarks.move(drag.id, { parentId: node.id });
       } else {
-        let target = zone === 'before' ? index : index + 1;
-        // Within the same folder Chrome expects the index as it will be
-        // AFTER the dragged item is removed from its old slot.
-        if (drag.parentId === parentId && drag.index < target) target -= 1;
+        // Chromium evaluates the index against the list BEFORE the dragged
+        // node is removed, so no -1 adjustment for same-parent forward moves
+        // (Firefox differs here, but this extension is Chromium-only).
+        const target = zone === 'before' ? index : index + 1;
         await chrome.bookmarks.move(drag.id, { parentId, index: target });
       }
     } catch {
