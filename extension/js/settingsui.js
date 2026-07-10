@@ -150,9 +150,16 @@ async function openPanel(state) {
     s.labelSource,
     (v) => { s.labelSource = v; save(s); },
   ));
+  row('Favicon in labels', checkbox(s.labelFavicon, (v) => (s.labelFavicon = v)));
+  row('Label lines', select(
+    [['1', 'One line'], ['2', 'Up to two lines']],
+    String(s.labelLines),
+    (v) => { s.labelLines = Number(v); save(s); },
+  ));
   row('Open links in a new tab', checkbox(s.openInNewTab, (v) => (s.openInNewTab = v)));
   row('Icon size', range(48, 128, s.iconSize, (v) => (s.iconSize = v)));
-  row('Card spacing', range(0, 48, s.gridGap, (v) => (s.gridGap = v)));
+  row('Horizontal spacing', range(0, 48, s.gridGapX, (v) => (s.gridGapX = v)));
+  row('Vertical spacing', range(0, 48, s.gridGapY, (v) => (s.gridGapY = v)));
 
   // ---- Cards ----
   section('Cards');
@@ -185,6 +192,11 @@ async function openPanel(state) {
   bgColorRow = row('Card color', color(s.tileBgColor, (v) => (s.tileBgColor = v)));
   syncColorRow();
   row('Icon padding', range(0, 25, s.iconPadding, (v) => (s.iconPadding = v)));
+  const padHint = document.createElement('p');
+  padHint.style.cssText = 'font-size:12px;color:var(--muted);margin:0 0 4px;line-height:1.5';
+  padHint.textContent =
+    'Applied automatically to icons with transparent backgrounds only — solid icons always fill the tile.';
+  panel.appendChild(padHint);
   row('Border width', range(0, 4, s.borderWidth, (v) => (s.borderWidth = v)));
   row('Border color', color(s.borderColor, (v) => (s.borderColor = v)));
 

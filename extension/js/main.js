@@ -6,8 +6,8 @@ import {
   getNode, getChildren, resolveFolder, onBookmarksChanged,
 } from './bookmarks.js';
 import {
-  renderIcon, initIconCache, isInternalUrl, iconKeyFor, toBrowserUrl, domainOf,
-  colorFor, INTERNAL_PAGES,
+  renderIcon, initIconCache, isInternalUrl, iconKeyFor, labelIconFor,
+  toBrowserUrl, domainOf, colorFor, INTERNAL_PAGES,
 } from './icons.js';
 import { initSearch } from './search.js';
 import { bindCardDnd, isDraggingCard } from './dnd.js';
@@ -60,7 +60,8 @@ function applyTheme() {
     : 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif');
   // The popup is small — cap sizes regardless of the user's grid settings.
   css.setProperty('--icon-size', (IS_POPUP ? Math.min(s.iconSize, 48) : s.iconSize) + 'px');
-  css.setProperty('--grid-gap', (IS_POPUP ? Math.min(s.gridGap, 10) : s.gridGap) + 'px');
+  css.setProperty('--grid-gap-x', (IS_POPUP ? Math.min(s.gridGapX, 10) : s.gridGapX) + 'px');
+  css.setProperty('--grid-gap-y', (IS_POPUP ? Math.min(s.gridGapY, 16) : s.gridGapY) + 'px');
   css.setProperty('--tile-radius', s.tileRadius + '%');
   css.setProperty('--border-width', s.borderWidth + 'px');
   css.setProperty('--border-color', s.borderColor);
@@ -69,6 +70,7 @@ function applyTheme() {
   // Fixed side/bottom bars make no sense inside a 420px popup.
   document.body.dataset.quickpos = IS_POPUP ? 'top' : s.quickPosition;
   document.body.classList.toggle('no-labels', s.labelSource === 'none');
+  document.body.classList.toggle('label-2', s.labelLines === 2);
 
   // 'top' places the quick bar inside the main column, right below the search
   // box; the other positions keep it as a body child so flex-direction can
@@ -147,7 +149,13 @@ function createCard(node, parentId, { quick = false } = {}) {
   } else {
     const label = document.createElement('span');
     label.className = 'label';
-    label.textContent = labelFor(node);
+    const text = document.createElement('span');
+    text.className = 'ltext';
+    // The favicon lives INSIDE the text flow (start of the first line), so it
+    // hugs the first word no matter how the centered text wraps.
+    if (s.labelFavicon) text.appendChild(labelIconFor(node));
+    text.appendChild(document.createTextNode(labelFor(node)));
+    label.appendChild(text);
     label.title = node.title || node.url || '';
     card.appendChild(label);
   }

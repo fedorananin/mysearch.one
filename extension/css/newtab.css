@@ -4,7 +4,8 @@
   --text-color: #e8eaed;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --icon-size: 72px;
-  --grid-gap: 16px;
+  --grid-gap-x: 16px;
+  --grid-gap-y: 26px;
   --tile-radius: 24%;
   --tile-bg: #2b2f36;
   --border-width: 0px;
@@ -191,8 +192,9 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(var(--icon-size) + 32px), 1fr));
-  gap: calc(var(--grid-gap) + 10px) var(--grid-gap);
+  gap: var(--grid-gap-y) var(--grid-gap-x);
   justify-items: center;
+  align-items: start;
 }
 
 /* Card = icon tile + separate label below (no shared frame). */
@@ -255,13 +257,39 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
 .card .label {
   font-size: 13px;
   max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.card .label .lico {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+  vertical-align: -2.5px;
+  opacity: .85;
+}
+.card .label img.lico { object-fit: contain; }
+.card .label svg.lico path { fill: currentColor; }
+.card .label .ltext {
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Two-line mode: every label reserves the full two-line height (min-height),
+   so rows with short and long titles stay vertically uniform. */
+body.label-2 .card .label .ltext {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  word-break: break-word;
+  min-height: 2.6em;
+}
 body.no-labels .card .label { display: none; }
-body.no-labels .cards { gap: var(--grid-gap); }
 
 /* Drag & drop feedback */
 .card.dragging { opacity: .35; }
@@ -290,7 +318,6 @@ body.popup #content { padding: 16px 16px 24px; max-width: none; }
 body.popup #searchform { margin: 0 0 16px; }
 body.popup #searchinput { font-size: 14px; padding: 10px 16px 10px 42px; }
 body.popup #quickbar { padding: 0 0 16px; }
-body.popup .cards { gap: 14px 8px; }
 body.popup .card .label { font-size: 11px; }
 
 /* ---------- Settings button & panel ---------- */

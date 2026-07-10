@@ -13,13 +13,16 @@ export const DEFAULTS = {
 
   viewMode: 'drill',                       // drill (folders open in place) | sections
   labelSource: 'title',                    // title | domain | none
+  labelFavicon: false,                     // small favicon before the label text
+  labelLines: 1,                           // 1 | 2 — max lines for the label
   openInNewTab: false,
 
   searchEnabled: true,
   suggestEnabled: true,
 
   iconSize: 72,                            // tile side, px
-  gridGap: 16,                             // horizontal space between cards, px
+  gridGapX: 16,                            // horizontal space between cards, px
+  gridGapY: 26,                            // vertical space between card rows, px
   tileRadius: 24,                          // % of tile side, 0..50 (50 = circle)
   siteTileBg: 'color',                     // transparent | color | domain
   folderTileBg: 'domain',                  // transparent | color | domain (from name)
@@ -38,8 +41,13 @@ export const DEFAULTS = {
 };
 
 export async function loadSettings() {
-  const stored = await chrome.storage.sync.get(SYNC_KEY);
-  return { ...DEFAULTS, ...(stored[SYNC_KEY] || {}) };
+  const stored = (await chrome.storage.sync.get(SYNC_KEY))[SYNC_KEY] || {};
+  // v1 had a single gridGap — carry it over to the split X/Y settings.
+  if (stored.gridGap != null && stored.gridGapX == null) {
+    stored.gridGapX = stored.gridGap;
+    stored.gridGapY = stored.gridGap + 10;
+  }
+  return { ...DEFAULTS, ...stored };
 }
 
 export async function saveSettings(settings) {

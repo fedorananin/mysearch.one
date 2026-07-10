@@ -25,6 +25,7 @@ export const INTERNAL_PAGES = [
 
 // Paths from Material Icons (Apache 2.0), 24x24 viewBox.
 const GLYPHS = {
+  folder: 'M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8z',
   star: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
   key: 'M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z',
   history: 'M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z',
@@ -35,6 +36,24 @@ const GLYPHS = {
 
 export function isInternalUrl(url) {
   return INTERNAL_SCHEME.test(url || '');
+}
+
+// Tiny icon shown before the label text (optional setting). Browser favicon
+// cache ONLY — no external services at this size; the cache serves a standard
+// globe when it has nothing. Folders and internal pages get their glyphs.
+export function labelIconFor(node) {
+  let el;
+  if (!node.url) {
+    el = svgGlyph('folder');
+  } else if (isInternalUrl(node.url)) {
+    el = svgGlyph(internalGlyphFor(node.url));
+  } else {
+    el = document.createElement('img');
+    el.src = faviconCacheUrl(node.url, 16);
+    el.alt = '';
+  }
+  el.setAttribute('class', 'lico');
+  return el;
 }
 
 // Key for the customIcons map: sites by URL, folders by title. Titles (unlike
@@ -306,13 +325,7 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
 
   // Folders without a custom icon get the folder glyph tinted by their title.
   if (!url) {
-    const svg = svgGlyph('folder');
-    svg.innerHTML = '';
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', 'M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8z');
-    p.setAttribute('fill', 'currentColor');
-    svg.appendChild(p);
-    tile.appendChild(svg);
+    tile.appendChild(svgGlyph('folder'));
     tile.classList.add('is-folder');
     return;
   }
