@@ -79,6 +79,7 @@ function applyTheme() {
   document.body.dataset.quickpos = IS_POPUP ? 'top' : s.quickPosition;
   document.body.classList.toggle('no-labels', s.labelSource === 'none');
   document.body.classList.toggle('label-2', s.labelLines === 2);
+  document.body.classList.toggle('label-favicon-saturate', s.labelFaviconSaturation);
 
   // 'top' places the quick bar inside the main column, right below the search
   // box; the other positions keep it as a body child so flex-direction can
@@ -141,14 +142,18 @@ function createCard(node, parentId, { quick = false } = {}) {
 
   const tile = document.createElement('div');
   tile.className = 'tile';
-  const bgMode = node.url ? s.siteTileBg : s.folderTileBg;
+  const isFolder = !node.url;
+  const bgMode = isFolder ? s.folderTileBg : s.siteTileBg;
   if (bgMode === 'domain') {
     tile.style.background = colorFor(node.url ? (domainOf(node.url) || node.title) : node.title);
   } else if (bgMode === 'color') {
-    const c = palette().tileBgColor;
-    tile.style.background = s.tileBgOpacity >= 100
-      ? c
-      : `color-mix(in srgb, ${c} ${s.tileBgOpacity}%, transparent)`;
+    // Site and folder cards get independent colors; auto theme has no per-kind
+    // colors, so both fall back to the preset tile color there.
+    const c = s.themeMode === 'auto'
+      ? palette().tileBgColor
+      : (isFolder ? s.folderTileBgColor : s.tileBgColor);
+    const o = isFolder ? s.folderTileBgOpacity : s.tileBgOpacity;
+    tile.style.background = o >= 100 ? c : `color-mix(in srgb, ${c} ${o}%, transparent)`;
   } else {
     tile.style.background = 'transparent';
   }
@@ -203,10 +208,13 @@ function makeCards(nodes, parentId) {
   return box;
 }
 
-// The trailing "+" card: opens the same add menu as an empty-space right-click,
-// targeting whatever folder is currently on screen. Visibility (off/always/hover)
-// is driven by the '.add-hover' class on #grid, set in renderMain.
-function appendAddCard(box) {
+// Append the trailing "+" card to one section's cards box, adding to that
+// section's own folder. Visibility (off/always/hover) is driven by the
+// '.add-hover' class on the box itself, so in sections mode each section reveals
+// only its own "+" on hover.
+function appendAddCard(box, folderId, addMode) {
+  if (addMode === 'hover') box.classList.add('add-hover');
+
   const card = document.createElement('div');
   card.className = 'card addcard';
   card.title = 'Add bookmark or folder';
@@ -222,14 +230,14 @@ function appendAddCard(box) {
   card.addEventListener('click', (e) => {
     // Stop the click from bubbling to the document listener that closes the menu.
     e.stopPropagation();
-    showMenu(e.clientX, e.clientY, addMenuItems());
+    showMenu(e.clientX, e.clientY, addMenuItems(folderId));
     // In hover mode the "+" would otherwise fade out the moment the cursor
-    // leaves the grid for the menu — pin it visible until the menu closes.
-    grid.classList.add('addmenu-open');
+    // leaves the section for the menu — pin it visible until the menu closes.
+    box.classList.add('addmenu-open');
     const ctx = document.getElementById('ctxmenu');
     const obs = new MutationObserver(() => {
       if (ctx.hidden) {
-        grid.classList.remove('addmenu-open');
+        box.classList.remove('addmenu-open');
         obs.disconnect();
       }
     });
@@ -316,11 +324,13 @@ function currentFolderId() {
   return state.trail.length ? state.trail[state.trail.length - 1].id : state.rootId;
 }
 
-// Menu items for adding content to the current folder. Shared by the empty-space
-// right-click menu and the "+" add card. The target folder is read lazily via
-// currentFolderId() so it's always the folder actually on screen.
-function addMenuItems() {
-  return [
+// Menu items for adding content to a folder. Shared by the empty-space
+// right-click menu and the "+" add card. When no target is given (background
+// right-click) it falls back to the folder currently on screen; the section
+// "+" cards pass their own section's folder id.
+function addMenuItems(folderId) {
+  const target = () => folderId ?? currentFolderId();
+  const items = [
     {
       label: 'New bookmark…',
       onClick: async () => {
@@ -335,7 +345,7 @@ function addMenuItems() {
         if (!values || !values.url) return;
         let url = values.url;
         if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
-        await chrome.bookmarks.create({ parentId: currentFolderId(), title: values.title, url });
+        await chrome.bookmarks.create({ parentId: target(), title: values.title, url });
       },
     },
     {
@@ -347,32 +357,21 @@ function addMenuItems() {
           fields: [{ name: 'title', label: 'Name' }],
         });
         if (!values || !values.title) return;
-        await chrome.bookmarks.create({ parentId: currentFolderId(), title: values.title });
+        await chrome.bookmarks.create({ parentId: target(), title: values.title });
       },
     },
-    {
-      label: 'Add browser page…',
-      onClick: async () => {
-        const values = await formDialog({
-          title: 'Add browser page',
-          okLabel: 'Add',
-          fields: [{
-            name: 'page',
-            label: 'Page',
-            type: 'select',
-            options: INTERNAL_PAGES.map((p) => ({ value: p.url, label: p.title })),
-          }],
-        });
-        if (!values) return;
-        const page = INTERNAL_PAGES.find((p) => p.url === values.page);
-        await chrome.bookmarks.create({
-          parentId: currentFolderId(),
-          title: page.title,
-          url: page.url,
-        });
-      },
-    },
+    'sep',
   ];
+  // Quick presets for the browser's built-in pages. We store the chrome:// form;
+  // toBrowserUrl() translates it to edge:// etc. when the card is opened.
+  for (const page of INTERNAL_PAGES) {
+    items.push({
+      label: page.title,
+      onClick: () =>
+        chrome.bookmarks.create({ parentId: target(), title: page.title, url: page.url }),
+    });
+  }
+  return items;
 }
 
 function showBackgroundMenu(e) {
@@ -450,15 +449,24 @@ async function renderMain() {
   const children = await getChildren(current.id);
 
   const addEnabled = s.addButton !== 'off';
-  grid.classList.toggle('add-hover', addEnabled && s.addButton === 'hover');
+  // Build a section box for one folder, with its own trailing "+".
+  const sectionBox = (nodes, folderId) => {
+    const box = makeCards(nodes, folderId);
+    if (addEnabled) appendAddCard(box, folderId, s.addButton);
+    return box;
+  };
+  const sectionTitle = (text) => {
+    const h = document.createElement('h2');
+    h.className = 'section-title';
+    h.textContent = text;
+    grid.appendChild(h);
+  };
 
   if (!children.length) {
     // Still offer the "+" so a freshly-created empty folder can be filled.
     if (addEnabled) {
       grid.classList.remove('sections');
-      const box = makeCards([], current.id);
-      appendAddCard(box);
-      grid.appendChild(box);
+      grid.appendChild(sectionBox([], current.id));
     }
     emptyhint.textContent =
       'This folder is empty. Right-click anywhere to add a bookmark, or pick another folder in Settings.';
@@ -470,25 +478,20 @@ async function renderMain() {
     grid.classList.add('sections');
     const loose = children.filter((c) => c.url);
     const folders = children.filter((c) => !c.url);
-    // The "+" adds to the root folder — keep it with the loose cards.
+    // The loose/root section: its "+" adds to the root folder.
     if (loose.length || addEnabled) {
-      const looseBox = makeCards(loose, current.id);
-      if (addEnabled) appendAddCard(looseBox);
-      grid.appendChild(looseBox);
+      if (s.mainSectionTitle) sectionTitle(rootNode.title || 'Home');
+      grid.appendChild(sectionBox(loose, current.id));
     }
     for (const folder of folders) {
-      const title = document.createElement('h2');
-      title.className = 'section-title';
-      title.textContent = folder.title || '(untitled)';
-      grid.appendChild(title);
+      sectionTitle(folder.title || '(untitled)');
       const sub = await getChildren(folder.id);
-      grid.appendChild(makeCards(sub, folder.id));
+      // Each folder section gets its own "+", adding into that folder.
+      grid.appendChild(sectionBox(sub, folder.id));
     }
   } else {
     grid.classList.remove('sections');
-    const box = makeCards(children, current.id);
-    if (addEnabled) appendAddCard(box);
-    grid.appendChild(box);
+    grid.appendChild(sectionBox(children, current.id));
   }
 }
 

@@ -12,8 +12,10 @@ export const DEFAULTS = {
   quickPosition: 'top',                    // top | bottom | left | right
 
   viewMode: 'drill',                       // drill (folders open in place) | sections
+  mainSectionTitle: false,                 // sections mode: give the root (loose) section a heading too
   labelSource: 'title',                    // title | domain | none
   labelFavicon: false,                     // small favicon before the label text
+  labelFaviconSaturation: true,            // apply the icon-saturation setting to label favicons too
   labelLines: 1,                           // 1 | 2 — max lines for the label
   openInNewTab: false,
   addButton: 'hover',                      // off | always | hover — the "+" add card
@@ -30,8 +32,10 @@ export const DEFAULTS = {
   hoverZoom: 7,                            // % a tile grows on hover, 0 = no growth
   siteTileBg: 'color',                     // transparent | color | domain
   folderTileBg: 'domain',                  // transparent | color | domain (from name)
-  tileBgColor: '#2b2f36',
-  tileBgOpacity: 100,                      // % opacity of the single-color card background
+  tileBgColor: '#2b2f36',                  // single-color background for SITE cards
+  tileBgOpacity: 100,                      // % opacity of that site-card background
+  folderTileBgColor: '#2b2f36',            // single-color background for FOLDER cards
+  folderTileBgOpacity: 100,                // % opacity of that folder-card background
   borderWidth: 0,                          // px
   borderColor: '#3c4043',
   iconPadding: 12,                         // inset size, % of tile side; applied per-card (icon dialog)

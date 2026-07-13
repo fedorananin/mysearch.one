@@ -287,6 +287,9 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
   opacity: .85;
 }
 .card .label img.lico { object-fit: contain; }
+/* Match the label favicon to the main icon's saturation (a color favicon under
+   a grayscale tile looks off). Toggled by the labelFaviconSaturation setting. */
+body.label-favicon-saturate .card .label img.lico { filter: saturate(var(--icon-saturation, 1)); }
 .card .label svg.lico path { fill: currentColor; }
 .card .label .ltext {
   text-align: center;
@@ -326,11 +329,12 @@ body.no-labels .card .label { display: none; }
   line-height: 1;
 }
 #quickbar .tile.addtile .addplus { font-size: 22px; }
-/* Hover mode: the "+" reserves its slot but only fades in while the grid (the
-   "zone" it lives in) is hovered. 'always' mode omits this class entirely. */
-#grid.add-hover .card.addcard { opacity: 0; transition: opacity .18s ease; }
-#grid.add-hover:hover .card.addcard,
-#grid.add-hover.addmenu-open .card.addcard { opacity: 1; }
+/* Hover mode: the "+" reserves its slot but only fades in while its own section
+   (cards box) is hovered — in sections mode each section reveals just its own
+   "+". 'always' mode omits this class entirely. */
+.cards.add-hover .card.addcard { opacity: 0; transition: opacity .18s ease; }
+.cards.add-hover:hover .card.addcard,
+.cards.add-hover.addmenu-open .card.addcard { opacity: 1; }
 
 /* Drag & drop feedback */
 .card.dragging { opacity: .35; }

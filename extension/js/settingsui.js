@@ -140,17 +140,30 @@ async function openPanel(state) {
 
   // ---- Layout ----
   section('Layout');
+  let mainTitleRow;
+  const syncMainTitle = () => {
+    // The main-section heading only exists in sections mode.
+    mainTitleRow.style.display = s.viewMode === 'sections' ? '' : 'none';
+  };
   row('Subfolders', select(
     [['drill', 'Open in place (drill down)'], ['sections', 'Show as sections']],
     s.viewMode,
-    (v) => { s.viewMode = v; save(s); },
+    (v) => { s.viewMode = v; syncMainTitle(); save(s); },
   ));
+  mainTitleRow = row('Title for main section', checkbox(s.mainSectionTitle, (v) => (s.mainSectionTitle = v)));
+  syncMainTitle();
   row('Labels', select(
     [['title', 'Bookmark title'], ['domain', 'Domain'], ['none', 'None (icons only)']],
     s.labelSource,
     (v) => { s.labelSource = v; save(s); },
   ));
-  row('Favicon in labels', checkbox(s.labelFavicon, (v) => (s.labelFavicon = v)));
+  let labelFavSatRow;
+  const syncLabelFavSat = () => {
+    labelFavSatRow.style.display = s.labelFavicon ? '' : 'none';
+  };
+  row('Favicon in labels', checkbox(s.labelFavicon, (v) => { s.labelFavicon = v; syncLabelFavSat(); }));
+  labelFavSatRow = row('Saturate label favicons', checkbox(s.labelFaviconSaturation, (v) => (s.labelFaviconSaturation = v)));
+  syncLabelFavSat();
   row('Label lines', select(
     [['1', 'One line'], ['2', 'Up to two lines']],
     String(s.labelLines),
@@ -172,15 +185,15 @@ async function openPanel(state) {
   row('Icon saturation', range(0, 100, s.iconSaturation, (v) => (s.iconSaturation = v)));
   row('Icon saturation (hover)', range(0, 100, s.iconSaturationHover, (v) => (s.iconSaturationHover = v)));
   row('Hover zoom', range(0, 25, s.hoverZoom, (v) => (s.hoverZoom = v)));
-  let bgColorRow, bgOpacityRow;
-  const colorModeOn = () => s.siteTileBg === 'color' || s.folderTileBg === 'color';
+  let siteColorRow, siteOpacityRow, folderColorRow, folderOpacityRow;
+  // Site and folder cards have independent color + opacity. The color picker is
+  // pointless in auto theme mode (presets supply the color); opacity still is.
   const syncColorRow = () => {
-    // The picker is pointless in auto theme mode — presets supply the color.
-    bgColorRow.style.display =
-      colorModeOn() && s.themeMode !== 'auto' ? '' : 'none';
-    // Opacity is independent of the color source, so it stays available even in
-    // auto theme mode.
-    bgOpacityRow.style.display = colorModeOn() ? '' : 'none';
+    const notAuto = s.themeMode !== 'auto';
+    siteColorRow.style.display = s.siteTileBg === 'color' && notAuto ? '' : 'none';
+    siteOpacityRow.style.display = s.siteTileBg === 'color' ? '' : 'none';
+    folderColorRow.style.display = s.folderTileBg === 'color' && notAuto ? '' : 'none';
+    folderOpacityRow.style.display = s.folderTileBg === 'color' ? '' : 'none';
   };
   row('Site card background', select(
     [['transparent', 'Transparent'], ['color', 'Single color'], ['domain', 'Color from domain']],
@@ -191,6 +204,8 @@ async function openPanel(state) {
       save(s);
     },
   ));
+  siteColorRow = row('Site card color', color(s.tileBgColor, (v) => (s.tileBgColor = v)));
+  siteOpacityRow = row('Site card opacity', range(0, 100, s.tileBgOpacity, (v) => (s.tileBgOpacity = v)));
   row('Folder card background', select(
     [['transparent', 'Transparent'], ['color', 'Single color'], ['domain', 'Color from name']],
     s.folderTileBg,
@@ -200,8 +215,8 @@ async function openPanel(state) {
       save(s);
     },
   ));
-  bgColorRow = row('Card color', color(s.tileBgColor, (v) => (s.tileBgColor = v)));
-  bgOpacityRow = row('Card opacity', range(0, 100, s.tileBgOpacity, (v) => (s.tileBgOpacity = v)));
+  folderColorRow = row('Folder card color', color(s.folderTileBgColor, (v) => (s.folderTileBgColor = v)));
+  folderOpacityRow = row('Folder card opacity', range(0, 100, s.folderTileBgOpacity, (v) => (s.folderTileBgOpacity = v)));
   syncColorRow();
   row('Icon padding', range(0, 25, s.iconPadding, (v) => (s.iconPadding = v)));
   const padHint = document.createElement('p');

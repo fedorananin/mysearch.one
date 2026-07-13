@@ -70,8 +70,9 @@ The repository also ships a companion **browser extension** (in the [`extension/
 *   **Browser internal pages** — bookmark `chrome://` pages (passwords, bookmarks, history...) and they actually open, with automatic `chrome://` ↔ `edge://` mapping.
 *   **Open a folder as a tab group** — one click turns a bookmarks folder into a named, colored tab group.
 *   **"Add to start page"** — right-click any page or link to bookmark it straight into your grid or quick launch bar.
+*   **Inline "+" add card** — an add button at the end of each section (always shown, on hover, or off) for quickly creating a bookmark, a folder, or a preset browser page right where you are.
 *   **mysearch.one everywhere** — the search box (with Brave-powered suggestions) and the browser's default search both route through mysearch.one, so all bangs work out of the box.
-*   **Customization** — themes (custom colors or auto light/dark), icon size, spacing, card shapes from square to circle, backgrounds, fonts, and a toolbar popup mini-dial.
+*   **Customization** — themes (custom colors or auto light/dark), icon size, spacing, card shapes from square to circle, fonts, and a toolbar popup mini-dial. Fine-tune the look with icon color saturation (at rest and on hover), hover zoom, per-kind card colors and opacity (sites vs folders separately), a background image with an optional color/darken/lighten overlay, and optional section headings.
 
 ### Install (developer mode)
 1.  Clone this repository (or download it).
