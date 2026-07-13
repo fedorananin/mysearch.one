@@ -157,6 +157,11 @@ async function openPanel(state) {
     (v) => { s.labelLines = Number(v); save(s); },
   ));
   row('Open links in a new tab', checkbox(s.openInNewTab, (v) => (s.openInNewTab = v)));
+  row('Add button', select(
+    [['hover', 'Show on hover'], ['always', 'Always visible'], ['off', 'Off']],
+    s.addButton,
+    (v) => { s.addButton = v; save(s); },
+  ));
   row('Icon size', range(48, 128, s.iconSize, (v) => (s.iconSize = v)));
   row('Horizontal spacing', range(0, 48, s.gridGapX, (v) => (s.gridGapX = v)));
   row('Vertical spacing', range(0, 48, s.gridGapY, (v) => (s.gridGapY = v)));
@@ -164,12 +169,18 @@ async function openPanel(state) {
   // ---- Cards ----
   section('Cards');
   row('Corner radius', range(0, 50, s.tileRadius, (v) => (s.tileRadius = v)));
-  let bgColorRow;
+  row('Icon saturation', range(0, 100, s.iconSaturation, (v) => (s.iconSaturation = v)));
+  row('Icon saturation (hover)', range(0, 100, s.iconSaturationHover, (v) => (s.iconSaturationHover = v)));
+  row('Hover zoom', range(0, 25, s.hoverZoom, (v) => (s.hoverZoom = v)));
+  let bgColorRow, bgOpacityRow;
+  const colorModeOn = () => s.siteTileBg === 'color' || s.folderTileBg === 'color';
   const syncColorRow = () => {
     // The picker is pointless in auto theme mode — presets supply the color.
     bgColorRow.style.display =
-      (s.siteTileBg === 'color' || s.folderTileBg === 'color') && s.themeMode !== 'auto'
-        ? '' : 'none';
+      colorModeOn() && s.themeMode !== 'auto' ? '' : 'none';
+    // Opacity is independent of the color source, so it stays available even in
+    // auto theme mode.
+    bgOpacityRow.style.display = colorModeOn() ? '' : 'none';
   };
   row('Site card background', select(
     [['transparent', 'Transparent'], ['color', 'Single color'], ['domain', 'Color from domain']],
@@ -190,6 +201,7 @@ async function openPanel(state) {
     },
   ));
   bgColorRow = row('Card color', color(s.tileBgColor, (v) => (s.tileBgColor = v)));
+  bgOpacityRow = row('Card opacity', range(0, 100, s.tileBgOpacity, (v) => (s.tileBgOpacity = v)));
   syncColorRow();
   row('Icon padding', range(0, 25, s.iconPadding, (v) => (s.iconPadding = v)));
   const padHint = document.createElement('p');
@@ -219,6 +231,12 @@ async function openPanel(state) {
   ));
   colorRows.push(row('Background color', color(s.pageBg, (v) => (s.pageBg = v))));
 
+  // Overlay tint rows — only relevant when a background image is set.
+  const overlayRows = [];
+  const syncOverlayRows = () => {
+    for (const r of overlayRows) r.style.display = s.hasBgImage ? '' : 'none';
+  };
+
   const bgBtn = document.createElement('button');
   bgBtn.className = 'small';
   bgBtn.textContent = s.hasBgImage ? 'Remove image' : 'Choose image…';
@@ -227,6 +245,7 @@ async function openPanel(state) {
       await setBgImage(null);
       s.hasBgImage = false;
       bgBtn.textContent = 'Choose image…';
+      syncOverlayRows();
       save(s);
     } else {
       const input = document.createElement('input');
@@ -235,16 +254,26 @@ async function openPanel(state) {
       input.addEventListener('change', async () => {
         const file = input.files[0];
         if (!file) return;
-        const dataUrl = await readAsDataUrl(file);
-        await setBgImage(dataUrl);
-        s.hasBgImage = true;
-        bgBtn.textContent = 'Remove image';
-        save(s);
+        try {
+          const dataUrl = await fileToBackground(file);
+          await setBgImage(dataUrl);
+          s.hasBgImage = true;
+          bgBtn.textContent = 'Remove image';
+          syncOverlayRows();
+          save(s);
+        } catch (err) {
+          // Surface the failure instead of leaving the user staring at an
+          // unchanged page (the previous silent await-throw on quota overflow).
+          alert('Could not set the background image.\n' + (err?.message || err));
+        }
       });
       input.click();
     }
   });
   row('Background image', bgBtn);
+  overlayRows.push(row('Overlay color', color(s.overlayColor, (v) => (s.overlayColor = v))));
+  overlayRows.push(row('Overlay opacity', range(0, 100, s.overlayOpacity, (v) => (s.overlayOpacity = v))));
+  syncOverlayRows();
 
   colorRows.push(row('Text color', color(s.textColor, (v) => (s.textColor = v))));
   syncThemeRows();
@@ -278,11 +307,29 @@ async function openPanel(state) {
   panel.hidden = false;
 }
 
-function readAsDataUrl(file) {
+// Downscale + re-encode the chosen image before it goes into storage.local:
+// full-resolution photos (common from phone cameras / OneDrive) blow past the
+// ~10 MB local-storage quota as base64, and the write silently fails. Fitting
+// the long side to 2560px as JPEG keeps it well under quota and paints faster.
+function fileToBackground(file, maxDim = 2560, quality = 0.85) {
   return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onerror = reject;
-    r.onload = () => resolve(r.result);
-    r.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode the image.'));
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
 }

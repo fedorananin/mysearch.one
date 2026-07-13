@@ -21,7 +21,15 @@ html, body { min-height: 100vh; margin: 0; }
 
 body {
   font-family: var(--font);
-  background: var(--page-bg) var(--bg-image, none) center / cover no-repeat fixed;
+  /* Layers top→bottom: overlay tint, background image, base color. */
+  background-color: var(--page-bg);
+  background-image:
+    linear-gradient(var(--overlay, transparent), var(--overlay, transparent)),
+    var(--bg-image, none);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
@@ -80,7 +88,7 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
   height: 32px;
   cursor: pointer;
 }
-#quickbar .tile:hover { transform: scale(1.18); }
+#quickbar .tile:hover { transform: scale(var(--hover-scale, 1.07)); }
 #quickbar .tile .letter { font-size: 15px; }
 #quickbar .tile .emoji { font-size: calc(32px * var(--emoji-scale, .78)); }
 
@@ -221,11 +229,19 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  transition: transform .12s ease;
+  transition: transform .12s ease, filter .18s ease;
   flex-shrink: 0;
+  /* Global color saturation for every icon (favicon, emoji, letter, glyph) and
+     the tile's own colored background. 1 = normal, 0 = grayscale. */
+  filter: saturate(var(--icon-saturation, 1));
 }
-.card:hover .tile { transform: scale(1.07); }
+.card:hover .tile { transform: scale(var(--hover-scale, 1.07)); }
 .card:active .tile { transform: scale(.97); }
+/* Separate saturation while hovered (e.g. grayscale at rest, color on hover). */
+.card:hover .tile:not(.addtile),
+#quickbar .tile:hover {
+  filter: saturate(var(--icon-saturation-hover, 1));
+}
 
 /* Favicons fill the tile edge to edge by default — icons with their own
    background color look best that way. Transparent-background icons look
@@ -291,6 +307,31 @@ body.label-2 .card .label .ltext {
 }
 body.no-labels .card .label { display: none; }
 
+/* ---------- Add ("+") card ---------- */
+
+.tile.addtile {
+  background: transparent;
+  border: 2px dashed color-mix(in srgb, var(--text-color) 22%, transparent);
+  color: var(--muted);
+  filter: none; /* it's UI chrome — the saturation slider shouldn't touch it */
+}
+.card.addcard:hover .tile.addtile {
+  color: var(--text-color);
+  border-color: color-mix(in srgb, var(--text-color) 45%, transparent);
+  background: var(--hover-bg);
+}
+.tile.addtile .addplus {
+  font-size: calc(var(--icon-size) * .5);
+  font-weight: 300;
+  line-height: 1;
+}
+#quickbar .tile.addtile .addplus { font-size: 22px; }
+/* Hover mode: the "+" reserves its slot but only fades in while the grid (the
+   "zone" it lives in) is hovered. 'always' mode omits this class entirely. */
+#grid.add-hover .card.addcard { opacity: 0; transition: opacity .18s ease; }
+#grid.add-hover:hover .card.addcard,
+#grid.add-hover.addmenu-open .card.addcard { opacity: 1; }
+
 /* Drag & drop feedback */
 .card.dragging { opacity: .35; }
 .card.drop-before .tile { box-shadow: -14px 0 0 -6px #3b82f6; }
@@ -340,6 +381,19 @@ body.popup .card .label { font-size: 11px; }
 }
 #settingsbtn svg { width: 24px; height: 24px; }
 #settingsbtn:hover { color: var(--text-color); background: var(--hover-bg); }
+
+/* Chrome surfaces (settings panel, context menu, dialogs) use a fixed,
+   always-readable palette independent of the user's page colors — otherwise a
+   dark text color on a dark background makes the settings unreadable. Redefining
+   the theme variables here re-resolves every var(--text-color)/var(--panel-bg)
+   inside these elements to these fixed values. */
+#settingspanel, #ctxmenu, #dlg {
+  --text-color: #e8eaed;
+  --muted: color-mix(in srgb, #e8eaed 55%, transparent);
+  --hover-bg: color-mix(in srgb, #e8eaed 10%, transparent);
+  --panel-bg: #23262c;
+  color: var(--text-color);
+}
 
 #settingspanel {
   position: fixed;

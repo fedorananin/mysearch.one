@@ -63,10 +63,18 @@ function applyTheme() {
   css.setProperty('--grid-gap-x', (IS_POPUP ? Math.min(s.gridGapX, 10) : s.gridGapX) + 'px');
   css.setProperty('--grid-gap-y', (IS_POPUP ? Math.min(s.gridGapY, 16) : s.gridGapY) + 'px');
   css.setProperty('--tile-radius', s.tileRadius + '%');
+  css.setProperty('--icon-saturation', s.iconSaturation / 100);
+  css.setProperty('--icon-saturation-hover', s.iconSaturationHover / 100);
+  css.setProperty('--hover-scale', 1 + s.hoverZoom / 100);
   css.setProperty('--border-width', s.borderWidth + 'px');
   css.setProperty('--border-color', s.borderColor);
   css.setProperty('--tile-pad', s.iconPadding + '%');
   css.setProperty('--bg-image', state.bgImage ? `url("${state.bgImage}")` : 'none');
+  // Optional tint over the background image (darken a bright photo / lighten a
+  // dark one). Only meaningful when an image is set.
+  css.setProperty('--overlay', state.bgImage && s.overlayOpacity > 0
+    ? `color-mix(in srgb, ${s.overlayColor} ${s.overlayOpacity}%, transparent)`
+    : 'transparent');
   // Fixed side/bottom bars make no sense inside a 420px popup.
   document.body.dataset.quickpos = IS_POPUP ? 'top' : s.quickPosition;
   document.body.classList.toggle('no-labels', s.labelSource === 'none');
@@ -137,7 +145,10 @@ function createCard(node, parentId, { quick = false } = {}) {
   if (bgMode === 'domain') {
     tile.style.background = colorFor(node.url ? (domainOf(node.url) || node.title) : node.title);
   } else if (bgMode === 'color') {
-    tile.style.background = palette().tileBgColor;
+    const c = palette().tileBgColor;
+    tile.style.background = s.tileBgOpacity >= 100
+      ? c
+      : `color-mix(in srgb, ${c} ${s.tileBgOpacity}%, transparent)`;
   } else {
     tile.style.background = 'transparent';
   }
@@ -190,6 +201,42 @@ function makeCards(nodes, parentId) {
   box.dataset.parent = parentId;
   for (const node of nodes) box.appendChild(createCard(node, parentId));
   return box;
+}
+
+// The trailing "+" card: opens the same add menu as an empty-space right-click,
+// targeting whatever folder is currently on screen. Visibility (off/always/hover)
+// is driven by the '.add-hover' class on #grid, set in renderMain.
+function appendAddCard(box) {
+  const card = document.createElement('div');
+  card.className = 'card addcard';
+  card.title = 'Add bookmark or folder';
+
+  const tile = document.createElement('div');
+  tile.className = 'tile addtile';
+  const plus = document.createElement('span');
+  plus.className = 'addplus';
+  plus.textContent = '+';
+  tile.appendChild(plus);
+  card.appendChild(tile);
+
+  card.addEventListener('click', (e) => {
+    // Stop the click from bubbling to the document listener that closes the menu.
+    e.stopPropagation();
+    showMenu(e.clientX, e.clientY, addMenuItems());
+    // In hover mode the "+" would otherwise fade out the moment the cursor
+    // leaves the grid for the menu — pin it visible until the menu closes.
+    grid.classList.add('addmenu-open');
+    const ctx = document.getElementById('ctxmenu');
+    const obs = new MutationObserver(() => {
+      if (ctx.hidden) {
+        grid.classList.remove('addmenu-open');
+        obs.disconnect();
+      }
+    });
+    obs.observe(ctx, { attributes: true, attributeFilter: ['hidden'] });
+  });
+
+  box.appendChild(card);
 }
 
 // ---------------------------------------------------------------- context menus
@@ -269,9 +316,11 @@ function currentFolderId() {
   return state.trail.length ? state.trail[state.trail.length - 1].id : state.rootId;
 }
 
-function showBackgroundMenu(e) {
-  e.preventDefault();
-  showMenu(e.clientX, e.clientY, [
+// Menu items for adding content to the current folder. Shared by the empty-space
+// right-click menu and the "+" add card. The target folder is read lazily via
+// currentFolderId() so it's always the folder actually on screen.
+function addMenuItems() {
+  return [
     {
       label: 'New bookmark…',
       onClick: async () => {
@@ -323,7 +372,12 @@ function showBackgroundMenu(e) {
         });
       },
     },
-  ]);
+  ];
+}
+
+function showBackgroundMenu(e) {
+  e.preventDefault();
+  showMenu(e.clientX, e.clientY, addMenuItems());
 }
 
 // ---------------------------------------------------------------- rendering
@@ -395,7 +449,17 @@ async function renderMain() {
   const current = state.trail.length ? state.trail[state.trail.length - 1] : rootNode;
   const children = await getChildren(current.id);
 
+  const addEnabled = s.addButton !== 'off';
+  grid.classList.toggle('add-hover', addEnabled && s.addButton === 'hover');
+
   if (!children.length) {
+    // Still offer the "+" so a freshly-created empty folder can be filled.
+    if (addEnabled) {
+      grid.classList.remove('sections');
+      const box = makeCards([], current.id);
+      appendAddCard(box);
+      grid.appendChild(box);
+    }
     emptyhint.textContent =
       'This folder is empty. Right-click anywhere to add a bookmark, or pick another folder in Settings.';
     emptyhint.hidden = false;
@@ -406,7 +470,12 @@ async function renderMain() {
     grid.classList.add('sections');
     const loose = children.filter((c) => c.url);
     const folders = children.filter((c) => !c.url);
-    if (loose.length) grid.appendChild(makeCards(loose, current.id));
+    // The "+" adds to the root folder — keep it with the loose cards.
+    if (loose.length || addEnabled) {
+      const looseBox = makeCards(loose, current.id);
+      if (addEnabled) appendAddCard(looseBox);
+      grid.appendChild(looseBox);
+    }
     for (const folder of folders) {
       const title = document.createElement('h2');
       title.className = 'section-title';
@@ -417,7 +486,9 @@ async function renderMain() {
     }
   } else {
     grid.classList.remove('sections');
-    grid.appendChild(makeCards(children, current.id));
+    const box = makeCards(children, current.id);
+    if (addEnabled) appendAddCard(box);
+    grid.appendChild(box);
   }
 }
 

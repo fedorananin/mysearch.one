@@ -16,6 +16,7 @@ export const DEFAULTS = {
   labelFavicon: false,                     // small favicon before the label text
   labelLines: 1,                           // 1 | 2 — max lines for the label
   openInNewTab: false,
+  addButton: 'hover',                      // off | always | hover — the "+" add card
 
   searchEnabled: true,
   suggestEnabled: true,
@@ -24,9 +25,13 @@ export const DEFAULTS = {
   gridGapX: 16,                            // horizontal space between cards, px
   gridGapY: 26,                            // vertical space between card rows, px
   tileRadius: 24,                          // % of tile side, 0..50 (50 = circle)
+  iconSaturation: 100,                     // % color saturation of every tile, 0 = grayscale
+  iconSaturationHover: 100,                // % color saturation of a tile while hovered
+  hoverZoom: 7,                            // % a tile grows on hover, 0 = no growth
   siteTileBg: 'color',                     // transparent | color | domain
   folderTileBg: 'domain',                  // transparent | color | domain (from name)
   tileBgColor: '#2b2f36',
+  tileBgOpacity: 100,                      // % opacity of the single-color card background
   borderWidth: 0,                          // px
   borderColor: '#3c4043',
   iconPadding: 12,                         // inset size, % of tile side; applied per-card (icon dialog)
@@ -34,6 +39,8 @@ export const DEFAULTS = {
   themeMode: 'custom',                     // custom (colors below) | auto (system light/dark)
   pageBg: '#1d1f24',
   hasBgImage: false,                       // actual dataURL lives in storage.local
+  overlayColor: '#000000',                 // tint drawn over the bg image (darken/lighten)
+  overlayOpacity: 0,                       // % opacity of that tint, 0 = no overlay
   textColor: '#e8eaed',
   fontFamily: '',                          // empty = system default
 
