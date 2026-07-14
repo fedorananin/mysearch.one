@@ -48,7 +48,13 @@ export const DEFAULTS = {
   textColor: '#e8eaed',
   fontFamily: '',                          // empty = system default
 
-  externalFavicons: true,                  // allow Google favicon service (hi-res)
+  // External icon sources, individually switchable (privacy). The browser's
+  // own favicon cache is always used and has no toggle — it's local.
+  iconSrcGoogle: true,                     // Google faviconV2 (128px, collapses subdomains)
+  iconSrcDdg: true,                        // DuckDuckGo (32px, keeps per-subdomain icons)
+  iconSrcIconHorse: true,                  // icon.horse (hi-res; asked only when the above are blurry)
+
+  smallIconScaling: 'crisp',               // crisp (integer-upscale small icons, no blur) | off (as served)
 };
 
 export async function loadSettings() {
@@ -58,6 +64,14 @@ export async function loadSettings() {
     stored.gridGapX = stored.gridGap;
     stored.gridGapY = stored.gridGap + 10;
   }
+  // v2 had a single externalFavicons switch — an explicit "off" carries over
+  // to all per-source toggles.
+  if (stored.externalFavicons === false) {
+    stored.iconSrcGoogle ??= false;
+    stored.iconSrcDdg ??= false;
+    stored.iconSrcIconHorse ??= false;
+  }
+  delete stored.externalFavicons;
   return { ...DEFAULTS, ...stored };
 }
 

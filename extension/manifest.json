@@ -27,7 +27,8 @@
   "host_permissions": [
     "https://search.brave.com/*",
     "https://t3.gstatic.com/*",
-    "https://icons.duckduckgo.com/*"
+    "https://icons.duckduckgo.com/*",
+    "https://icon.horse/*"
   ],
   "chrome_url_overrides": {
     "newtab": "newtab.html"

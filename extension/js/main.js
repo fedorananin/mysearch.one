@@ -6,8 +6,8 @@ import {
   getNode, getChildren, resolveFolder, onBookmarksChanged,
 } from './bookmarks.js';
 import {
-  renderIcon, initIconCache, isInternalUrl, iconKeyFor, labelIconFor,
-  toBrowserUrl, domainOf, colorFor, INTERNAL_PAGES,
+  renderIcon, initIconCache, clearIconCache, ICON_SOURCE_KEYS, isInternalUrl,
+  iconKeyFor, labelIconFor, toBrowserUrl, domainOf, colorFor, INTERNAL_PAGES,
 } from './icons.js';
 import { initSearch } from './search.js';
 import { bindCardDnd, isDraggingCard } from './dnd.js';
@@ -578,6 +578,16 @@ async function init() {
       // Update in place: the settings panel and search module hold references
       // to this object — swapping it out would leave them editing a stale copy.
       Object.assign(state.settings, DEFAULTS, changes.settings.newValue || {});
+      // A toggled icon source invalidates cached icons: they may have come
+      // from a now-disabled source, and a newly enabled one should apply now,
+      // not after the weekly refresh. Same for the crisp-scaling mode — cached
+      // icons are stored already-scaled.
+      const { oldValue, newValue } = changes.settings;
+      if (oldValue && newValue &&
+          [...ICON_SOURCE_KEYS, 'smallIconScaling']
+            .some((k) => oldValue[k] !== newValue[k])) {
+        clearIconCache();
+      }
       state.bgImage = state.settings.hasBgImage ? await getBgImage() : null;
       applyTheme();
       search.refresh();

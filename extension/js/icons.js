@@ -1,5 +1,6 @@
 // Icon resolution: custom icon → built-in icon for browser-internal pages →
-// Google favicon service (hi-res, optional) → Chrome's local favicon cache →
+// external favicon services (Google/DuckDuckGo, icon.horse as a hi-res
+// booster; each individually optional) → Chrome's local favicon cache →
 // generated letter tile.
 
 const IS_EDGE = navigator.userAgent.includes('Edg/');
@@ -175,6 +176,51 @@ function faviconCacheUrl(url, size) {
   );
 }
 
+// ---- crisp scaling for small icons -----------------------------------------
+// A 16-32px favicon smoothly stretched over a 72px tile (144+ physical pixels
+// on Retina) turns to mush. Nearest-neighbor upscaling by an INTEGER factor
+// keeps every source pixel a sharp square; the final non-integer CSS scale to
+// the actual tile size then only softens the block edges a touch (the classic
+// pixel-art supersampling trick).
+//
+// Chromium's _favicon/ endpoint resizes the stored bitmap to EXACTLY the
+// requested size itself — nearest-neighbor when the request is an integer
+// multiple of the stored size, blurry Lanczos otherwise (see Chromium
+// components/favicon_base/select_favicon_frames.cc, GetResizedBitmap). So for
+// the local path the whole trick is the request size: 192 is a multiple of
+// every common favicon size (16/32/48/64) and covers a 96px tile on 2x
+// displays. Requesting 64 (the old behavior) NN-scales 16/32 but Lanczos-mushes
+// 48, and is too small for Retina anyway.
+const CRISP_SIZE = 192;
+
+// Nearest-neighbor prescale for small external icons (the canvas equivalent of
+// what _favicon/ does for local ones). Resolves to null when the image is
+// already big enough (or unreadable) — caller keeps the original.
+function crispUpscale(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onerror = () => resolve(null);
+    img.onload = () => {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (!w || w >= SHARP_ENOUGH) return resolve(null);
+      const k = Math.ceil(CRISP_SIZE / w);
+      const canvas = document.createElement('canvas');
+      canvas.width = w * k;
+      canvas.height = h * k;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0, w * k, h * k);
+      try {
+        resolve(canvas.toDataURL());
+      } catch {
+        resolve(null);
+      }
+    };
+    img.src = src;
+  });
+}
+
 // ---- resolved-icon cache -------------------------------------------------
 // External favicons are stored as data URLs in chrome.storage.local so a new
 // tab can paint them instantly instead of re-fetching (which caused visible
@@ -188,13 +234,14 @@ const FALLBACK = 'FALLBACK';                  // marker: external source has not
 let iconCache = {};
 let flushTimer = null;
 
-// v2: the key was bumped when the DuckDuckGo source was added, so week-old
-// Google icons (which collapse subdomains) don't linger for another week.
-const CACHE_KEY = 'iconCacheV2';
+// The key is bumped whenever resolution improves (v2: DuckDuckGo, v3:
+// icon.horse, v4: crisp upscaling), so already-cached blurry icons don't
+// linger for another week.
+const CACHE_KEY = 'iconCacheV4';
 
 export async function initIconCache() {
   iconCache = (await chrome.storage.local.get(CACHE_KEY))[CACHE_KEY] || {};
-  chrome.storage.local.remove('iconCache'); // drop the v1 cache
+  chrome.storage.local.remove(['iconCache', 'iconCacheV2', 'iconCacheV3']); // old caches
   const now = Date.now();
   for (const [key, entry] of Object.entries(iconCache)) {
     if (now - entry.ts > EVICT_AFTER) delete iconCache[key];
@@ -206,10 +253,29 @@ function flushCache() {
   flushTimer = setTimeout(() => chrome.storage.local.set({ [CACHE_KEY]: iconCache }), 800);
 }
 
+// Settings keys of the switchable external sources. Cached icons may have come
+// from a source the user just disabled, so toggling any of these drops the
+// cache (main.js) — icons re-resolve immediately from the enabled set instead
+// of after the weekly refresh.
+export const ICON_SOURCE_KEYS = ['iconSrcGoogle', 'iconSrcDdg', 'iconSrcIconHorse'];
+
+export function clearIconCache() {
+  iconCache = {};
+  flushCache();
+}
+
 // a: 1 = icon has transparent pixels (render inset), 0 = fully opaque
 // (render edge to edge), undefined = not analyzed yet.
-function cachePut(key, value, a) {
-  iconCache[key] = { v: value, ts: Date.now(), ...(a !== undefined && { a }) };
+// p: the pinned source id this entry was resolved with ('google'/'ddg'/
+// 'horse'), absent = the automatic cascade. An entry only serves renders with
+// the same pin, so (un)pinning a bookmark re-resolves it immediately.
+function cachePut(key, value, a, p) {
+  iconCache[key] = {
+    v: value,
+    ts: Date.now(),
+    ...(a !== undefined && { a }),
+    ...(p && { p }),
+  };
   flushCache();
 }
 
@@ -267,8 +333,9 @@ async function fetchIconData(src) {
   // imageWidth doubles as validation: DDG sometimes serves text garbage with
   // a 200 status, and Google serves a tiny globe when it has nothing —
   // undecodable or ≤16px both count as a miss.
-  if ((await imageWidth(dataUrl)) <= 16) throw new Error('placeholder');
-  return dataUrl;
+  const width = await imageWidth(dataUrl);
+  if (width <= 16) throw new Error('placeholder');
+  return { dataUrl, width };
 }
 
 // "app.example.com" is a subdomain; "example.com", "www.example.com" and
@@ -281,24 +348,76 @@ function isSubdomainHost(host) {
   return true;
 }
 
-async function fetchExternalIcon(pageUrl) {
+// Below this width an icon visibly blurs on a full-size tile — worth asking
+// one more (slower) source for a sharper version before settling.
+const SHARP_ENOUGH = 64;
+
+// One entry per external service: request URL builder + the settings key of
+// its privacy toggle. The ids ('google'/'ddg'/'horse') are also what a
+// per-bookmark pin ({type:'source', value}) and the cache entry's `p` field
+// store — don't rename them.
+const SOURCES = {
+  google: {
+    key: 'iconSrcGoogle',
+    url: (u) => 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON' +
+      `&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(u.origin)}&size=128`,
+  },
+  ddg: {
+    key: 'iconSrcDdg',
+    url: (u) => `https://icons.duckduckgo.com/ip3/${u.hostname}.ico`,
+  },
+  horse: {
+    key: 'iconSrcIconHorse',
+    url: (u) => 'https://icon.horse/icon/' + u.hostname,
+  },
+};
+
+// A single specific service, chosen by the user for this bookmark. No size
+// judgement, no fallbacks — an explicit pin means "I want what THIS service
+// has" (icon.horse's generated letter tile included).
+async function fetchPinnedIcon(pageUrl, provider) {
+  const u = new URL(pageUrl);
+  return (await fetchIconData(SOURCES[provider].url(u))).dataUrl;
+}
+
+async function fetchExternalIcon(pageUrl, settings) {
   const u = new URL(pageUrl); // caller guarantees a valid http(s) URL
-  const google = 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON' +
-    `&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(u.origin)}&size=128`;
-  const ddg = `https://icons.duckduckgo.com/ip3/${u.hostname}.ico`;
+  const google = settings.iconSrcGoogle && SOURCES.google.url(u);
+  const ddg = settings.iconSrcDdg && SOURCES.ddg.url(u);
   // Subdomains: DuckDuckGo first — it keeps per-subdomain icons
   // (calendar.notion.so ≠ notion.so), which Google collapses into one.
   // Bare domains: Google first — 128px beats DDG's typical 32px.
-  const order = isSubdomainHost(u.hostname) ? [ddg, google] : [google, ddg];
+  const order = (isSubdomainHost(u.hostname) ? [ddg, google] : [google, ddg])
+    .filter(Boolean);
+  let best = null;
   let lastError;
   for (const src of order) {
     try {
-      return await fetchIconData(src);
+      const icon = await fetchIconData(src);
+      if (icon.width >= SHARP_ENOUGH) return icon.dataUrl;
+      if (!best || icon.width > best.width) best = icon;
     } catch (e) {
       lastError = e;
     }
   }
-  throw lastError;
+  // Quality booster: Google and DDG top out at ~32px for some sites (GitHub —
+  // SVG favicon + apple-touch-icon, neither indexed hi-res). icon.horse crawls
+  // the site itself and serves the largest icon it finds. Only consulted when
+  // a source above confirmed an icon EXISTS but served it blurry: for iconless
+  // sites icon.horse answers with its own generated letter tile (a perfectly
+  // valid 256px PNG — undetectable), and our local letter tile is the better
+  // fallback. With Google and DDG both switched off there is no such signal,
+  // so icon.horse is then simply asked directly, best-effort.
+  if (settings.iconSrcIconHorse && (best || order.length === 0)) {
+    try {
+      const icon = await fetchIconData(SOURCES.horse.url(u));
+      if (!best || icon.width > best.width) return icon.dataUrl;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  if (best) return best.dataUrl;
+  throw lastError || new Error('no icon sources enabled');
 }
 
 // Fills `tile` (an empty div) with the best available icon for the bookmark.
@@ -340,8 +459,14 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   // browser cache is the only thing that sees dynamic, JS-drawn favicons
   // (e.g. Notion Calendar's day number).
   const domain = domainOf(url);
-  const localOnly = custom?.type === 'local';
-  const useExternal = settings.externalFavicons && domain && !localOnly;
+  // Per-bookmark pinned source. A pin whose service is globally disabled is
+  // ignored (→ browser cache): the privacy toggles outrank per-card choices.
+  const pin = (custom?.type === 'source' && settings[SOURCES[custom.value]?.key])
+    ? custom.value
+    : null;
+  const localOnly = custom?.type === 'local' || (custom?.type === 'source' && !pin);
+  const anySource = ICON_SOURCE_KEYS.some((k) => settings[k]);
+  const useExternal = anySource && domain && !localOnly;
 
   const img = document.createElement('img');
   img.alt = '';
@@ -365,7 +490,10 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   };
   const showLocal = () => {
     img.onerror = showLetter;
-    img.src = faviconCacheUrl(url, 64);
+    // Crisp mode asks the browser cache for CRISP_SIZE: an integer multiple of
+    // every common stored favicon size, so Chromium upscales nearest-neighbor
+    // (sharp squares) instead of Lanczos (mush). See the CRISP_SIZE comment.
+    img.src = faviconCacheUrl(url, settings.smallIconScaling === 'crisp' ? CRISP_SIZE : 64);
     // The browser cache icon changes between visits — analyze on every render.
     hasAlpha(img.src).then(setPad);
   };
@@ -376,9 +504,11 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
   }
 
   const entry = iconCache[url];
-  if (entry?.v === FALLBACK) {
+  // An entry resolved under a different pin doesn't count — refetch below.
+  const match = !!entry && (entry.p ?? null) === pin;
+  if (match && entry.v === FALLBACK) {
     showLocal();
-  } else if (entry?.v) {
+  } else if (match && entry.v) {
     img.src = entry.v;
     if (entry.a === undefined) {
       // Cached before transparency analysis existed — analyze once, persist.
@@ -392,13 +522,21 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
     }
   }
 
-  if (entry && Date.now() - entry.ts < REFRESH_AFTER) return;
+  if (match && Date.now() - entry.ts < REFRESH_AFTER) return;
 
-  // No cache entry (first sighting) or a stale one — resolve in background.
-  fetchExternalIcon(url)
+  // No usable cache entry (first sighting, changed pin) or a stale one —
+  // resolve in background.
+  (pin ? fetchPinnedIcon(url, pin) : fetchExternalIcon(url, settings))
     .then(async (dataUrl) => {
+      // Small survivors of the cascade (e.g. a 32px DDG icon that icon.horse
+      // couldn't beat) get the same nearest-neighbor treatment before caching.
+      // Toggling the setting clears the cache (main.js), so 'off' re-resolves
+      // the originals.
+      if (settings.smallIconScaling === 'crisp') {
+        dataUrl = (await crispUpscale(dataUrl)) || dataUrl;
+      }
       const a = (await hasAlpha(dataUrl)) ? 1 : 0;
-      cachePut(url, dataUrl, a);
+      cachePut(url, dataUrl, a, pin);
       if (img.isConnected) {
         if (img.src !== dataUrl) img.src = dataUrl;
         setPad(!!a);
@@ -406,9 +544,10 @@ export function renderIcon(tile, bookmark, settings, customIcons) {
     })
     .catch(() => {
       // Only remember the failure when we're sure it's "nothing there", not a
-      // network hiccup hiding a previously good icon.
-      if (!entry?.v || entry.v === FALLBACK) {
-        cachePut(url, FALLBACK);
+      // network hiccup hiding a previously good icon (an entry from another
+      // pin doesn't count as good here).
+      if (!match || !entry.v || entry.v === FALLBACK) {
+        cachePut(url, FALLBACK, undefined, pin);
         showLocal();
       }
     });

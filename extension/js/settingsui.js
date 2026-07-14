@@ -218,6 +218,17 @@ async function openPanel(state) {
   folderColorRow = row('Folder card color', color(s.folderTileBgColor, (v) => (s.folderTileBgColor = v)));
   folderOpacityRow = row('Folder card opacity', range(0, 100, s.folderTileBgOpacity, (v) => (s.folderTileBgOpacity = v)));
   syncColorRow();
+  row('Small icons', select(
+    [['crisp', 'Sharpen (integer upscale)'], ['off', 'As the browser serves them']],
+    s.smallIconScaling,
+    (v) => { s.smallIconScaling = v; save(s); },
+  ));
+  const crispHint = document.createElement('p');
+  crispHint.style.cssText = 'font-size:12px;color:var(--muted);margin:0 0 4px;line-height:1.5';
+  crispHint.textContent =
+    'Low-resolution favicons (16–32px, typical when only the browser’s local cache is used) ' +
+    'are upscaled pixel-perfect instead of being smoothly blurred.';
+  panel.appendChild(crispHint);
   row('Icon padding', range(0, 25, s.iconPadding, (v) => (s.iconPadding = v)));
   const padHint = document.createElement('p');
   padHint.style.cssText = 'font-size:12px;color:var(--muted);margin:0 0 4px;line-height:1.5';
@@ -309,14 +320,24 @@ async function openPanel(state) {
   row('Suggestions (Brave)', checkbox(s.suggestEnabled, (v) => (s.suggestEnabled = v)));
 
   // ---- Privacy ----
-  section('Privacy');
-  row('Favicons via Google & DuckDuckGo', checkbox(s.externalFavicons, (v) => (s.externalFavicons = v)));
+  section('Icon sources');
+  // The browser's own favicon cache is always in the cascade — it's local,
+  // nothing leaves the device, so there is nothing to opt out of. Shown as a
+  // permanently-on checkbox so the list reads as the complete cascade.
+  const localBox = checkbox(true, () => {});
+  localBox.disabled = true;
+  const localRow = row('Browser favicon cache', localBox);
+  localRow.title = 'Always on: this is your browser’s own icon cache, fully local.';
+  row('Google favicons', checkbox(s.iconSrcGoogle, (v) => (s.iconSrcGoogle = v)));
+  row('DuckDuckGo favicons', checkbox(s.iconSrcDdg, (v) => (s.iconSrcDdg = v)));
+  row('Icon Horse (high-res)', checkbox(s.iconSrcIconHorse, (v) => (s.iconSrcIconHorse = v)));
   const hint = document.createElement('p');
   hint.style.cssText = 'font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.5';
   hint.textContent =
-    'When enabled, bookmark domains are sent to Google’s and DuckDuckGo’s favicon services ' +
-    'to fetch sharp icons (Google for regular domains, DuckDuckGo for subdomains). ' +
-    'Disable to use only the browser’s local favicon cache (lower quality).';
+    'Enabled sources receive the domains of your bookmarks (never full URLs) to fetch ' +
+    'sharp icons. Google covers regular domains, DuckDuckGo covers subdomains, and ' +
+    'icon.horse is asked only when the other two return a blurry icon. ' +
+    'Disable all to rely on the browser’s local cache alone (lower quality).';
   panel.appendChild(hint);
 
   panel.hidden = false;

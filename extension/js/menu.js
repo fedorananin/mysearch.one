@@ -143,8 +143,10 @@ export function confirmDialog(message, okLabel = 'Delete') {
   });
 }
 
-// Icon picker: default favicon / emoji / uploaded image.
-// Resolves with {type:'emoji'|'image', value} | 'reset' | null.
+// Icon picker: default favicon / browser cache / pinned service / emoji /
+// uploaded image.
+// Resolves with {type:'emoji'|'image'|'source', value} | {type:'local'} |
+// 'reset' | null.
 export function iconDialog(current, { isFolder = false } = {}) {
   return new Promise((resolve) => {
     dlg.textContent = '';
@@ -168,10 +170,26 @@ export function iconDialog(current, { isFolder = false } = {}) {
     };
 
     const rDefault = mk('default', isFolder ? 'Default (folder icon)' : 'Default (site favicon)');
-    // The browser favicon cache is meaningless for folders.
+    // The browser favicon cache and favicon services are meaningless for folders.
     const rLocal = isFolder
       ? null
       : mk('local', 'Browser icon (local cache) — sees dynamic favicons');
+    let rSource = null;
+    let sourceSelect = null;
+    if (!isFolder) {
+      rSource = mk('source', 'Favicon service:');
+      sourceSelect = document.createElement('select');
+      for (const [value, text] of [
+        ['google', 'Google'], ['ddg', 'DuckDuckGo'], ['horse', 'Icon Horse'],
+      ]) {
+        const o = document.createElement('option');
+        o.value = value;
+        o.textContent = text;
+        sourceSelect.appendChild(o);
+      }
+      rSource.parentElement.appendChild(sourceSelect);
+      sourceSelect.addEventListener('focus', () => (rSource.checked = true));
+    }
     const rEmoji = mk('emoji', 'Emoji or text:');
     const emojiInput = document.createElement('input');
     emojiInput.type = 'text';
@@ -195,6 +213,9 @@ export function iconDialog(current, { isFolder = false } = {}) {
       rImage.checked = true;
     } else if (current?.type === 'local' && rLocal) {
       rLocal.checked = true;
+    } else if (current?.type === 'source' && rSource) {
+      rSource.checked = true;
+      sourceSelect.value = current.value;
     } else {
       rDefault.checked = true;
     }
@@ -219,6 +240,8 @@ export function iconDialog(current, { isFolder = false } = {}) {
         result = 'reset';
       } else if (type === 'local') {
         result = { type: 'local' };
+      } else if (type === 'source') {
+        result = { type: 'source', value: sourceSelect.value };
       } else if (type === 'emoji' && emojiInput.value.trim()) {
         result = { type: 'emoji', value: emojiInput.value.trim() };
       } else if (type === 'image') {
