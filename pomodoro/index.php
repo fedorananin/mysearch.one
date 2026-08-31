@@ -235,7 +235,6 @@
   <meta property="og:image" content="favicon.png">
   <meta property="og:url" content="https://pomodoro.mysearch.one">
   <meta property="og:type" content="website">
-  <script defer src="https://cloud.umami.is/script.js" data-website-id="99e24bb6-9edd-4ab9-a040-b30607ed8b59" data-tag="pomodoro"></script>
 </head>
 
 <body>

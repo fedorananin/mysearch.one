@@ -38,7 +38,6 @@
         <link rel="icon" href="favicon.png" type="image/png">
         <?php echo '<link rel="icon" href="'.FLAG_CDN.'1x1/'.$ip_data['country_code'].'.svg" type="image/svg+xml">'; ?>
         <link rel="canonical" href="https://ip.mysearch.one" />
-        <script defer src="https://cloud.umami.is/script.js" data-website-id="99e24bb6-9edd-4ab9-a040-b30607ed8b59" data-tag="ip"></script>
         <meta property="og:title" content="IP lookup" />
         <meta property="og:description" content="IP geolocation information" />
         <meta property="og:image" content="https://ip.mysearch.one/favicon.png" />
