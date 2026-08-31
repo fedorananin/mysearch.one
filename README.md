@@ -55,6 +55,22 @@ You can use any of these prefixes interchangeably: `!`, `/`, `-`, `:`, `@`.
 
 *See the full list on the [How it works](https://mysearch.one/?mode=howitworks) page.*
 
+## 🌐 Companion Services
+
+The repository also contains two small standalone tools, served as subdomains from the same codebase:
+
+### 📍 IP Lookup — [ip.mysearch.one](https://ip.mysearch.one) ([`ip/`](ip/))
+Shows your (or any) IPv4 address with geolocation, timezone, ASN/provider, and browser details.
+*   **Data**: three MMDB databases, auto-refreshed by `ip/update.php` (throttled to once per 8 hours, protected by a secret key):
+    *   [ipinfo.io](https://ipinfo.io) free `country_asn` — country/continent names + ASN (requires a free token);
+    *   [ip-location-db](https://github.com/sapics/ip-location-db) GeoLite2 city — city/region/coordinates/timezone;
+    *   [DB-IP lite](https://db-ip.com) — city-level fallback.
+*   **Flags** are loaded from the [flag-icons](https://github.com/lipis/flag-icons) jsDelivr CDN — no local icon pack.
+*   Quick shortcut: `!ip` on mysearch.one, or `!ip 8.8.8.8` to look up a specific address.
+
+### 🍅 Pomodoro Timer — [pomodoro.mysearch.one](https://pomodoro.mysearch.one) ([`pomodoro/`](pomodoro/))
+A minimalist Pomodoro timer with 25- and 45-minute modes, sounds, and a motivational quote for every break. Shortcut: `!pomodoro`.
+
 ## 🧩 Browser Extension — Start Page & Speed Dial
 
 The repository also ships a companion **browser extension** (in the [`extension/`](extension/) folder) for Chromium browsers (Chrome, Edge): a new tab page built entirely from your bookmarks, with mysearch.one as the built-in search.
@@ -95,13 +111,14 @@ You can easily host your own instance of mysearch.one.
     ```
 2.  **Upload files** to your web server's public directory.
 3.  **Configure Redirects (.htaccess):**
-    Open `.htaccess` and update the domain in the redirect rule to match your own domain (or remove the block if you don't need canonical redirects).
-    ```apache
-    # Change 'mysearch.one' to your actual domain
-    RewriteCond %{HTTP_HOST} !^your-domain\.com$ [NC]
-    RewriteRule ^(.*)$ https://your-domain.com/$1 [R=301,L]
+    All three sites (search, IP lookup, Pomodoro) share one document root; the root `.htaccess` routes requests by hostname: `ip.your-domain` → `ip/`, `pomodoro.your-domain` → `pomodoro/`, everything else → the main domain. Open `.htaccess` and replace `mysearch.one` with your own domain (or strip the host-routing blocks if you only need the search).
+    In a hosting panel (e.g. HestiaCP), create **one** site for `your-domain` and add `www.your-domain`, `ip.your-domain`, `pomodoro.your-domain` as aliases.
+4.  **Set up the IP lookup (optional):**
+    ```bash
+    cp ip/config.example.php ip/config.php
     ```
-4.  **Done!** Access your site.
+    Fill in `IPINFO_TOKEN` (free token from [ipinfo.io](https://ipinfo.io/account/data-downloads)) and `UPDATE_KEY` (any long random string), then add the cron job from `ip/cron.txt` so the databases stay fresh. `ip/config.php` is gitignored — secrets never reach the repository.
+5.  **Done!** Access your site.
 
 ## 🤝 Contributing
 

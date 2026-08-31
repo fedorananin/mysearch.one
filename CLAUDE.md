@@ -4,9 +4,14 @@
 
 **mysearch.one** is a lightweight PHP-based search aggregator and redirect tool. It functions similarly to DuckDuckGo's "bang" system, allowing users to direct their queries to specific search engines or services (like Google, Yandex, YouTube, Reddit, ChatGPT) using short prefixes or suffixes (e.g., `!g`, `/yt`, `@ai`).
 
-The repository contains two deliverables:
+The repository contains four deliverables:
 *   The **website** (PHP, repo root) — the search redirector itself.
 *   The **browser extension** (`extension/`) — a bookmarks-based new tab / speed dial page with mysearch.one as the built-in search. Currently **unpublished**; it is loaded in developer mode only ("Load unpacked").
+*   **IP lookup** (`ip/`) — served as **ip.mysearch.one**.
+*   **Pomodoro timer** (`pomodoro/`) — served as **pomodoro.mysearch.one**.
+
+### Hosting layout (one HestiaCP site)
+All three PHP sites live in ONE web domain with aliases (`mysearch.one`, `www.mysearch.one`, `ip.mysearch.one`, `pomodoro.mysearch.one`) sharing a single document root. The root `.htaccess` routes by `Host`: `ip.mysearch.one` is internally rewritten to `ip/`, `pomodoro.mysearch.one` to `pomodoro/`; any other host (incl. `www`) 301s to `mysearch.one`, and `mysearch.one/ip/...` / `mysearch.one/pomodoro/...` 301 to the subdomains (no duplicate content). Because of this, code inside `ip/` and `pomodoro/` must use RELATIVE asset paths (they resolve against the subdomain root, which the rewrite maps back into the folder).
 
 **Core Philosophy:**
 *   **Not a Search Engine:** It does not crawl the web or index content. It redirects queries.
@@ -94,6 +99,17 @@ Bookmarks are the single source of truth: a chosen bookmarks folder is rendered 
 ### Known caveats
 *   Edge may be hostile to `chrome_settings_overrides.search_provider` for store-installed extensions; works when sideloaded.
 *   Chrome Web Store's "single purpose" policy may question the new-tab + search-provider combo — to be resolved at publication time.
+
+## Subdomain Services
+
+### `ip/` — IP lookup (ip.mysearch.one)
+*   **`index.php`** — the page; **`api.php`** — token-gated JSON API; **`ip.php`** — plain-text IP echo; **`functions_project.php`** — `getIPData()` / `getBrowserData()`.
+*   **Databases** (`.mmdb`, gitignored, downloaded by `update.php`): `ip_database.mmdb` (ipinfo.io free country_asn — country/continent NAMES + ASN incl. `as_domain`), `geolite2-city-ipv4.mmdb` (ip-location-db GeoLite2 city), `dbip-city-lite.mmdb` (DB-IP fallback for city data). ipinfo is the ONLY source of ASN data and human-readable country/continent names — the other two cannot replace it (nearest substitute would be `@ip-location-db/asn-mmdb`, which lacks `as_domain` and names).
+*   **`config.php`** (gitignored; template `config.example.php`) — `IPINFO_TOKEN` and `UPDATE_KEY`. `update.php` refuses to run without `?key=<UPDATE_KEY>` (or CLI), throttles to 8h via `last_update.txt`, and downloads to temp files so a failed fetch never clobbers a working DB. Cron line: `ip/cron.txt`.
+*   **Flags** come from the jsDelivr flag-icons CDN (`FLAG_CDN` const in `index.php`); the country code `xx` (unknown/localhost) exists on the CDN as a placeholder flag. No local flag pack.
+
+### `pomodoro/` — Pomodoro timer (pomodoro.mysearch.one)
+Single-page `index.php` (25/45-min modes via `?mode=`), `quote.php` returns a random motivational quote, plus sounds/favicon. Self-contained, relative paths only.
 
 ## Development Conventions
 

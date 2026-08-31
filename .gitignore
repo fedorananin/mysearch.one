@@ -4,3 +4,14 @@
 ._*
 .Spotlight-V100
 .Trashes
+
+# Local secrets (copy ip/config.example.php to ip/config.php and fill in)
+ip/config.php
+
+# IP databases — downloaded by ip/update.php, never commit
+ip/*.mmdb
+ip/*.mmdb.gz
+ip/last_update.txt
+
+# Personal notes
+ip/айпишники*.txt

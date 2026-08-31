@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Free IP API</title>
+        <link rel="icon" href="favicon.png" type="image/png">
+        <link rel="canonical" href="https://ip.mysearch.one/api.html" />
+        <meta property="og:title" content="Free IP API" />
+        <meta property="og:description" content="IP geolocation information with free API" />
+        <meta property="og:image" content="https://ip.mysearch.one/favicon.png" />
+        <meta property="og:url" content="https://ip.mysearch.one/api.html" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Free IP API" />
+        <style>
+            *, * *, * * * {
+                box-sizing: border-box;
+            }
+            html, body {
+                min-height: 100vh;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background-color: #191919;
+                color: #D4D4D4;
+                font-family: system-ui, Arial, sans-serif;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width:100%;
+            }
+            a {
+                color: #8ab4f8;
+                text-decoration: none;
+                transition: color 0.2s ease;
+            }
+            a:hover {
+                color: #aecbfa;
+                text-decoration: underline;
+            }
+            img.flag {
+                display: block;
+                width: 100%;
+                margin: 0 auto;
+                max-width: 128px;
+            }
+            h1.ip {
+                text-align: center;
+                font-weight: 900;
+                font-size: 450%;
+                margin: 0 0;
+                line-height: 0.9;
+            }
+            p.country {
+                text-align: center;
+                font-size: 175%;
+                margin: 10px 0;
+            }
+            p.country > span{
+                font-size:75%;
+            }
+            p.browser {
+                text-align: center;
+                font-size: 125%;
+                margin: 10px 0;
+            }
+            hr {
+                border: none;
+                height: 1px;
+                background-color: #333;
+                margin: 32px 0;
+                opacity: 0.7;
+                width: 100%;
+            }
+            form{
+                display: block;
+                width:100%;
+            }
+            .search-input {
+                width: 100% !important;
+                max-width:100%;
+                padding: 12px 16px;
+                font-size: 110%;
+                border: 1px solid #333;
+                border-radius: 8px;
+                background-color: #252525;
+                color: #d4d4d4;
+                outline: none;
+                transition: all 0.3s ease;
+                display: block;
+            }
+            .search-input:focus {
+                border-color: #4d4d4d;
+                box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+            }
+            
+            /* Styles for screens less than 700px */
+            @media screen and (max-width: 700px) {
+                h1.ip {
+                    font-size: 300%;
+                }
+                p.country {
+                    font-size: 140%;
+                }
+                p.browser {
+                    font-size: 110%;
+                }
+                .container {
+                    padding: 10px;
+                }
+            }
+
+            /* Styles for screens less than 550px */
+            @media screen and (max-width: 550px) {
+                h1.ip {
+                    font-size: 250%;
+                }
+                p.country {
+                    font-size: 130%;
+                }
+                p.browser {
+                    font-size: 105%;
+                }
+                .container {
+                    padding: 6px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <h1>Free IP Geolocation API</h1>
+        <div style="text-align: left;">
+            <h3>🔑 API will probably be available one day...</h3>
+            <p>Our API is available with a subscription plan. To access the API, you'll need to register and obtain an API key.</p>
+            
+            <h3>🌐 How to Use</h3>
+            <p>Send a GET request to the following URL with your API token:</p>
+            <code style="display: block; background: #252525; padding: 12px; border-radius: 8px; margin: 10px 0;">https://ip.mysearch.one/api.php?ip=8.8.8.8&token=xyz123abc456def789ghi</code>
+            <p>Replace <code>8.8.8.8</code> with the IP address you want to check and <code>xyz123abc456def789ghi</code> with your API token.</p>
+            
+            <p>You can also get browser information by sending a user agent:</p>
+            <code style="display: block; background: #252525; padding: 12px; border-radius: 8px; margin: 10px 0;">https://ip.mysearch.one/api.php?browser=Mozilla/5.0...&token=xyz123abc456def789ghi</code>
+            
+            <p>Both parameters can be combined in a single request:</p>
+            <code style="display: block; background: #252525; padding: 12px; border-radius: 8px; margin: 10px 0;">https://ip.mysearch.one/api.php?ip=8.8.8.8&browser=Mozilla/5.0...&token=xyz123abc456def789ghi</code>
+            
+            <p>To get information about your current IP address or browser, you can use the keywords <code>my</code>, <code>this</code>, or <code>current</code>:</p>
+            <code style="display: block; background: #252525; padding: 12px; border-radius: 8px; margin: 10px 0;">https://ip.mysearch.one/api.php?ip=my&browser=current&token=xyz123abc456def789ghi</code>
+            
+            <h3>📊 Get JSON Response</h3>
+            <p>The API will return IP location data in JSON format.</p>
+            
+            <h3>📝 Example JSON Response</h3>
+            <pre style="background: #252525; padding: 12px; border-radius: 8px; overflow-x: auto; text-align: left; font-size: 14px;">
+{
+  "ip": {
+    "ip": "8.8.8.8",
+    "country_name": "United States",
+    "country_code": "us",
+    "region_name": "California",
+    "city_name": "Mountain View",
+    "timezone": "America/Los_Angeles",
+    "timezone_offset": "UTC -7:00",
+    "continent_name": "North America",
+    "continent_code": "na",
+    "asn_code": "AS15169",
+    "asn_name": "Google LLC",
+    "asn_domain": "google.com",
+    "asn_url": "https://google.com"
+  },
+  "browser": {
+    "device": "desktop",
+    "os_family": "windows",
+    "os": "Windows 10/11",
+    "bits": "64",
+    "browser_name": "Edge",
+    "browser_version": 134,
+    "webview": false,
+    "desktop_mode": true,
+    "string": "Edge 134, Windows 10/11, desktop"
+  }
+}
+</pre>
+        </div>
+        <hr>
+        <p><a href="/">Return to main page</a><br><small>© 2025 ⁃ Made by <a href="https://www.linkedin.com/in/fedorananin/" target="_blank">Fёdor Ananin</a></small></p>
+    </div>
+    </body>
+</html>

@@ -1,13 +1,35 @@
 RewriteEngine On
 
-# If domain is NOT mysearch.one, redirect
-RewriteCond %{HTTP_HOST} !^mysearch\.one$ [NC]
+# Canonical hosts: mysearch.one, ip.mysearch.one, pomodoro.mysearch.one.
+# Anything else (www, server IP, stray aliases) -> main domain.
+RewriteCond %{HTTP_HOST} !^(mysearch\.one|ip\.mysearch\.one|pomodoro\.mysearch\.one)$ [NC]
 RewriteRule ^(.*)$ https://mysearch.one/$1 [R=301,L]
+
+# ip.mysearch.one is served from the /ip subfolder
+RewriteCond %{HTTP_HOST} ^ip\.mysearch\.one$ [NC]
+RewriteCond %{REQUEST_URI} !^/ip/
+RewriteRule ^(.*)$ ip/$1 [L]
+
+# pomodoro.mysearch.one is served from the /pomodoro subfolder
+RewriteCond %{HTTP_HOST} ^pomodoro\.mysearch\.one$ [NC]
+RewriteCond %{REQUEST_URI} !^/pomodoro/
+RewriteRule ^(.*)$ pomodoro/$1 [L]
+
+# Don't serve the subfolders on the main domain (no duplicate content)
+RewriteCond %{HTTP_HOST} ^mysearch\.one$ [NC]
+RewriteRule ^ip(/(.*))?$ https://ip.mysearch.one/$2 [R=301,L]
+RewriteCond %{HTTP_HOST} ^mysearch\.one$ [NC]
+RewriteRule ^pomodoro(/(.*))?$ https://pomodoro.mysearch.one/$2 [R=301,L]
 
 # Disable directory listing
 Options -Indexes
 
 # Deny direct access to md and txt files
 <FilesMatch "\.(md|txt)$">
+    Require all denied
+</FilesMatch>
+
+# Deny direct access to IP databases and local config
+<FilesMatch "(\.mmdb|\.mmdb\.gz|^config\.php)$">
     Require all denied
 </FilesMatch>

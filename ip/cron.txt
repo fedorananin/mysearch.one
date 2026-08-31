@@ -1,0 +1,3 @@
+# Cron: refresh the IP databases every 8+ hours (update.php has its own 8h throttle).
+# <UPDATE_KEY> = value of UPDATE_KEY from ip/config.php on the server.
+0 */8 * * * /usr/bin/curl --silent "https://ip.mysearch.one/update.php?key=<UPDATE_KEY>" &>/dev/null
