@@ -276,6 +276,33 @@ function showCardMenu(e, node) {
     },
   });
 
+  if (!isFolder) {
+    // Pre-filled copy placed right after the original — handy for "same link,
+    // different domain" bookmarks (e.g. another site's admin panel).
+    items.push({
+      label: 'Duplicate…',
+      onClick: async () => {
+        const values = await formDialog({
+          title: 'Duplicate bookmark',
+          okLabel: 'Create',
+          fields: [
+            { name: 'title', label: 'Title', value: node.title },
+            { name: 'url', label: 'URL', value: node.url },
+          ],
+        });
+        if (!values || !values.url) return;
+        let url = values.url;
+        if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
+        await chrome.bookmarks.create({
+          parentId: node.parentId,
+          index: node.index + 1,
+          title: values.title,
+          url,
+        });
+      },
+    });
+  }
+
   items.push({
     label: 'Change icon…',
     onClick: async () => {
