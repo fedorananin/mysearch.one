@@ -94,18 +94,23 @@ function applyTheme() {
 
 // ---------------------------------------------------------------- open
 
-function openUrl(url, { newTab = false } = {}) {
+// `background` mirrors the browser's own convention: middle-click and
+// Ctrl/Cmd+click open the tab without switching to it (Shift flips that).
+function openUrl(url, { newTab = false, background = false } = {}) {
   const real = toBrowserUrl(url);
   if (IS_POPUP) {
-    // Navigating inside the popup would be useless — open a tab and close.
-    chrome.tabs.create({ url: real });
-    window.close();
+    // Navigating inside the popup would be useless — open a tab. A background
+    // open keeps the popup up so several links can be opened in one go.
+    chrome.tabs.create({ url: real, active: !background });
+    if (!background) window.close();
+  } else if (newTab) {
+    // openerTabId places the tab next to this one, like a native link click.
+    chrome.tabs.getCurrent((tab) =>
+      chrome.tabs.create({ url: real, active: !background, openerTabId: tab?.id }),
+    );
   } else if (isInternalUrl(real)) {
     // chrome:// pages can only be opened through the tabs API.
-    if (newTab) chrome.tabs.create({ url: real });
-    else chrome.tabs.update({ url: real });
-  } else if (newTab) {
-    chrome.tabs.create({ url: real });
+    chrome.tabs.update({ url: real });
   } else {
     location.href = real;
   }
@@ -181,12 +186,16 @@ function createCard(node, parentId, { quick = false } = {}) {
       drill(node);
       return;
     }
-    openUrl(node.url, { newTab: s.openInNewTab || e.ctrlKey || e.metaKey });
+    const modifier = e.ctrlKey || e.metaKey;
+    openUrl(node.url, {
+      newTab: s.openInNewTab || modifier,
+      background: modifier && !e.shiftKey,
+    });
   });
   card.addEventListener('auxclick', (e) => {
     if (e.button === 1 && node.url) {
       e.preventDefault();
-      openUrl(node.url, { newTab: true });
+      openUrl(node.url, { newTab: true, background: !e.shiftKey });
     }
   });
 
@@ -257,7 +266,7 @@ function showCardMenu(e, node) {
     items.push({ label: 'Open', onClick: () => drill(node) });
     items.push({ label: 'Open all as tab group', onClick: () => openAsTabGroup(node) });
   } else {
-    items.push({ label: 'Open in new tab', onClick: () => openUrl(node.url, { newTab: true }) });
+    items.push({ label: 'Open in new tab', onClick: () => openUrl(node.url, { newTab: true, background: true }) });
   }
 
   items.push({
