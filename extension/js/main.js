@@ -285,32 +285,35 @@ function showCardMenu(e, node) {
     },
   });
 
-  if (!isFolder) {
-    // Pre-filled copy placed right after the original — handy for "same link,
-    // different domain" bookmarks (e.g. another site's admin panel).
-    items.push({
-      label: 'Duplicate…',
-      onClick: async () => {
-        const values = await formDialog({
-          title: 'Duplicate bookmark',
-          okLabel: 'Create',
-          fields: [
-            { name: 'title', label: 'Title', value: node.title },
-            { name: 'url', label: 'URL', value: node.url },
-          ],
-        });
-        if (!values || !values.url) return;
-        let url = values.url;
-        if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
-        await chrome.bookmarks.create({
-          parentId: node.parentId,
-          index: node.index + 1,
-          title: values.title,
-          url,
-        });
-      },
-    });
-  }
+  // Pre-filled copy placed right after the original — handy for "same link,
+  // different domain" bookmarks (e.g. another site's admin panel). A folder
+  // is copied together with everything inside it.
+  items.push({
+    label: 'Duplicate…',
+    onClick: async () => {
+      const fields = [{
+        name: 'title',
+        label: isFolder ? 'Name' : 'Title',
+        value: isFolder ? `${node.title} (copy)` : node.title,
+      }];
+      if (!isFolder) fields.push({ name: 'url', label: 'URL', value: node.url });
+      const values = await formDialog({
+        title: isFolder ? 'Duplicate folder' : 'Duplicate bookmark',
+        okLabel: 'Create',
+        fields,
+      });
+      if (!values) return;
+      const at = { parentId: node.parentId, index: node.index + 1 };
+      if (isFolder) {
+        await copyFolder(node, values.title, at);
+        return;
+      }
+      if (!values.url) return;
+      let url = values.url;
+      if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
+      await chrome.bookmarks.create({ ...at, title: values.title, url });
+    },
+  });
 
   items.push({
     label: 'Move to…',
@@ -345,6 +348,28 @@ function showCardMenu(e, node) {
   });
 
   showMenu(e.clientX, e.clientY, items);
+}
+
+// Deep copy of a folder. Nested items keep their titles, so their custom icons
+// (keyed by URL / folder title) apply to the copies as is; only the top
+// folder may get a new name, and its icon is copied over to that name.
+async function copyFolder(folder, title, { parentId, index }) {
+  const [tree] = await chrome.bookmarks.getSubTree(folder.id);
+  const copyChildren = async (children, into) => {
+    for (const child of children || []) {
+      const created = await chrome.bookmarks.create({
+        parentId: into, title: child.title, ...(child.url ? { url: child.url } : {}),
+      });
+      if (!child.url) await copyChildren(child.children, created.id);
+    }
+  };
+  const root = await chrome.bookmarks.create({ parentId, index, title });
+  await copyChildren(tree.children, root.id);
+  const icon = state.customIcons[iconKeyFor(folder)];
+  if (icon && title !== folder.title) {
+    const { ts, ...rest } = icon;
+    await setCustomIcon(iconKeyFor({ title }), rest);
+  }
 }
 
 // Folder picker for "Move to…". Folders being moved are left out together
