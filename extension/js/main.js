@@ -3,7 +3,7 @@ import {
   migrateIconStores, renameCustomIcon,
 } from './settings.js';
 import {
-  getNode, getChildren, resolveFolder, onBookmarksChanged,
+  getNode, getChildren, resolveFolder, onBookmarksChanged, allFolders,
 } from './bookmarks.js';
 import {
   renderIcon, initIconCache, clearIconCache, ICON_SOURCE_KEYS, isInternalUrl,
@@ -313,6 +313,14 @@ function showCardMenu(e, node) {
   }
 
   items.push({
+    label: 'Move to…',
+    onClick: async () => {
+      const parentId = await pickFolder('Move to folder', [node], node.parentId);
+      if (parentId && parentId !== node.parentId) await moveNodes([node], parentId);
+    },
+  });
+
+  items.push({
     label: 'Change icon…',
     onClick: async () => {
       const key = iconKeyFor(node);
@@ -337,6 +345,42 @@ function showCardMenu(e, node) {
   });
 
   showMenu(e.clientX, e.clientY, items);
+}
+
+// Folder picker for "Move to…". Folders being moved are left out together
+// with their whole subtree — the API refuses to move a folder into itself.
+// Resolves with the chosen folder id, or null if cancelled.
+async function pickFolder(title, nodes, currentId) {
+  const excluded = new Set(nodes.filter((n) => !n.url).map((n) => n.id));
+  const options = [];
+  let skipBelow = -1; // depth of the excluded folder whose subtree we're in
+  for (const f of await allFolders()) {
+    if (skipBelow >= 0 && f.depth > skipBelow) continue;
+    skipBelow = -1;
+    if (excluded.has(f.id)) {
+      skipBelow = f.depth;
+      continue;
+    }
+    options.push({
+      value: f.id,
+      label: '\u00a0\u00a0\u00a0\u00a0'.repeat(f.depth) + (f.title || '(untitled)'),
+    });
+  }
+  const values = await formDialog({
+    title,
+    okLabel: 'Move',
+    fields: [{ name: 'folder', label: 'Folder', type: 'select', options, value: currentId }],
+  });
+  return values?.folder || null;
+}
+
+// Appended to the end of the target folder, keeping their relative order.
+async function moveNodes(nodes, parentId) {
+  for (const node of nodes) {
+    try {
+      await chrome.bookmarks.move(node.id, { parentId });
+    } catch { /* gone meanwhile, or an illegal move — skip it */ }
+  }
 }
 
 // A bookmarks folder unfolds into a named, colored tab group — a workspace.
