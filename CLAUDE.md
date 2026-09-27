@@ -79,7 +79,7 @@ Bookmarks are the single source of truth: a chosen bookmarks folder is rendered 
 *   **`js/settings.js`** — defaults + storage helpers + custom icon stores (migration, rename-follow, dead-key cleanup).
 *   **`js/icons.js`** — favicon resolution cascade and the persistent icon cache; internal-page glyphs; emoji/text tile scaling (canvas-measured).
 *   **`js/bookmarks.js`** — `chrome.bookmarks` wrappers; folder refs are stored as `{id, path}` because bookmark IDs are not stable across synced devices (path of titles is the fallback).
-*   **`js/search.js`** — search box; suggestions fetched from Brave **directly** (host permission bypasses CORS, unlike the website which needs `suggestions.php`).
+*   **`js/search.js`** — search box; suggestions fetched from Brave **directly** (host permission bypasses CORS, unlike the website which needs `suggestions.php`). Matching bookmarks (`chrome.bookmarks.search`, setting `bookmarkSearch`) are listed above the suggestions; one whose title/domain STARTS with the query is preselected so Enter opens it — arrows cycle through the entries and back to the plain query, which goes to mysearch.one.
 *   **`js/dnd.js`** — card drag & drop, written back via `bookmarks.move`.
 *   **`js/menu.js`** — context menu + `<dialog>` helpers (edit, icon picker with emoji/text/image/local-favicon options).
 *   **`js/settingsui.js`** — the settings slide-over panel.

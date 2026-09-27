@@ -789,7 +789,7 @@ async function init() {
   applyTheme();
   initMenu();
   initSettingsUI(state);
-  search = initSearch(state);
+  search = initSearch(state, { openBookmark: openUrl });
   renderAll();
 
   grid.addEventListener('contextmenu', (e) => {

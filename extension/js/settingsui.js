@@ -318,6 +318,7 @@ async function openPanel(state) {
   section('Search');
   row('Show search box', checkbox(s.searchEnabled, (v) => (s.searchEnabled = v)));
   row('Suggestions (Brave)', checkbox(s.suggestEnabled, (v) => (s.suggestEnabled = v)));
+  row('Find my bookmarks', checkbox(s.bookmarkSearch, (v) => (s.bookmarkSearch = v)));
 
   // ---- Privacy ----
   section('Icon sources');

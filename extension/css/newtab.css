@@ -161,6 +161,23 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
 }
 #suggestions li:hover,
 #suggestions li.active { background: var(--hover-bg); }
+/* Bookmark matches: favicon + title + muted domain, set off from the
+   search suggestions below them by a thin rule. */
+#suggestions li.bm { display: flex; align-items: center; gap: 10px; }
+#suggestions li.bm .lico { width: 16px; height: 16px; flex-shrink: 0; object-fit: contain; }
+#suggestions li.bm svg.lico path { fill: currentColor; }
+#suggestions li.bm .bmtitle { overflow: hidden; text-overflow: ellipsis; }
+#suggestions li.bm .bmdomain {
+  margin-left: auto;
+  padding-left: 12px;
+  color: var(--muted);
+  font-size: .85em;
+  flex-shrink: 0;
+}
+#suggestions li.last-bm {
+  margin-bottom: 6px;
+  box-shadow: 0 6px 0 -5px color-mix(in srgb, var(--text-color) 12%, transparent);
+}
 
 /* ---------- Breadcrumbs ---------- */
 

@@ -22,6 +22,7 @@ export const DEFAULTS = {
 
   searchEnabled: true,
   suggestEnabled: true,
+  bookmarkSearch: true,                    // list matching bookmarks above the suggestions
 
   iconSize: 72,                            // tile side, px
   gridGapX: 16,                            // horizontal space between cards, px
