@@ -217,6 +217,7 @@ body[data-quickpos="bottom"] #content { padding-bottom: 120px; }
   width: calc(var(--icon-size) + 32px);
   cursor: pointer;
   user-select: none;
+  position: relative;
 }
 
 .tile {
@@ -338,6 +339,34 @@ body.no-labels .card .label { display: none; }
 
 /* Drag & drop feedback */
 .card.dragging { opacity: .35; }
+
+/* Multi-select (Shift+click): ring around the tile + a check badge. */
+.card.selected .tile { outline: 3px solid #3b82f6; outline-offset: 3px; }
+.card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: -6px;
+  left: calc(50% + var(--icon-size) / 2 - 12px);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgb(0 0 0 / .4);
+}
+#quickbar .card.selected .tile { outline-width: 2px; outline-offset: 2px; }
+#quickbar .card.selected::after {
+  top: -6px;
+  left: calc(50% + 16px - 9px);
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  font-size: 10px;
+}
 .card.drop-before .tile { box-shadow: -14px 0 0 -6px #3b82f6; }
 .card.drop-after .tile { box-shadow: 14px 0 0 -6px #3b82f6; }
 .card.drop-into .tile { outline: 3px solid #3b82f6; outline-offset: 3px; }
@@ -391,7 +420,7 @@ body.popup .card .label { font-size: 11px; }
    dark text color on a dark background makes the settings unreadable. Redefining
    the theme variables here re-resolves every var(--text-color)/var(--panel-bg)
    inside these elements to these fixed values. */
-#settingspanel, #ctxmenu, #dlg {
+#settingspanel, #ctxmenu, #dlg, #selbar {
   --text-color: #e8eaed;
   --muted: color-mix(in srgb, #e8eaed 55%, transparent);
   --hover-bg: color-mix(in srgb, #e8eaed 10%, transparent);
@@ -545,3 +574,41 @@ body.popup .card .label { font-size: 11px; }
 #dlg button:hover { filter: brightness(1.15); }
 #dlg .iconoptions { display: flex; flex-direction: column; gap: 10px; }
 #dlg label.opt { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+
+/* ---------- Selection action bar ---------- */
+
+#selbar {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 6px 6px 16px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 10px 34px rgb(0 0 0 / .4);
+  font-family: var(--font);
+  font-size: 14px;
+  white-space: nowrap;
+}
+#selbar .count { color: var(--muted); margin-right: 6px; }
+#selbar button {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  cursor: pointer;
+}
+#selbar button:hover { background: var(--hover-bg); }
+#selbar button.danger:hover { background: rgb(220 60 60 / .25); }
+#selbar button.close { color: var(--muted); }
+body[data-quickpos="bottom"] #selbar { bottom: 84px; }
+body.popup #selbar { bottom: 10px; font-size: 13px; }

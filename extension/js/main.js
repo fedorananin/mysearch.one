@@ -27,6 +27,7 @@ const state = {
   bgImage: null,
   rootId: null,
   trail: [], // folders drilled into, from root child down to current
+  selected: new Map(), // id → node of the cards picked for a bulk action
 };
 
 let search = null;
@@ -144,6 +145,11 @@ function createCard(node, parentId, { quick = false } = {}) {
   const s = state.settings;
   const card = document.createElement('div');
   card.className = 'card';
+  card.dataset.id = node.id;
+  if (state.selected.has(node.id)) {
+    card.classList.add('selected');
+    state.selected.set(node.id, node); // keep the freshest copy of the node
+  }
 
   const tile = document.createElement('div');
   tile.className = 'tile';
@@ -182,11 +188,17 @@ function createCard(node, parentId, { quick = false } = {}) {
   }
 
   card.addEventListener('click', (e) => {
+    // Shift+click picks cards; once something is picked, plain clicks keep
+    // picking until the selection is cleared (Esc, ✕ or a click on empty space).
+    const modifier = e.ctrlKey || e.metaKey;
+    if (!modifier && (e.shiftKey || state.selected.size)) {
+      toggleSelected(node);
+      return;
+    }
     if (!node.url) {
       drill(node);
       return;
     }
-    const modifier = e.ctrlKey || e.metaKey;
     openUrl(node.url, {
       newTab: s.openInNewTab || modifier,
       background: modifier && !e.shiftKey,
@@ -202,7 +214,8 @@ function createCard(node, parentId, { quick = false } = {}) {
   card.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    showCardMenu(e, node);
+    if (state.selected.has(node.id)) showSelectionMenu(e);
+    else showCardMenu(e, node);
   });
 
   bindCardDnd(card, node, parentId, node.index);
@@ -333,6 +346,8 @@ function showCardMenu(e, node) {
     },
   });
 
+  items.push({ label: 'Select', onClick: () => toggleSelected(node) });
+
   items.push('sep', {
     label: 'Delete',
     danger: true,
@@ -406,6 +421,143 @@ async function moveNodes(nodes, parentId) {
       await chrome.bookmarks.move(node.id, { parentId });
     } catch { /* gone meanwhile, or an illegal move — skip it */ }
   }
+}
+
+// ---------------------------------------------------------------- selection
+
+let selbar = null;
+
+function toggleSelected(node) {
+  if (state.selected.has(node.id)) state.selected.delete(node.id);
+  else state.selected.set(node.id, node);
+  syncSelection();
+}
+
+function clearSelection() {
+  if (!state.selected.size) return;
+  state.selected.clear();
+  syncSelection();
+}
+
+// Selected nodes in on-screen order (that's the order they open / move in).
+function selectedNodes() {
+  const ids = [...document.querySelectorAll('.card.selected')].map((c) => c.dataset.id);
+  return [...new Set(ids)].map((id) => state.selected.get(id)).filter(Boolean);
+}
+
+// Bring the card highlights and the action bar in line with state.selected.
+// Also runs after every render: picks that are no longer on screen (deleted,
+// moved away, or left behind in another folder) are dropped.
+function syncSelection() {
+  const onScreen = new Set();
+  for (const card of document.querySelectorAll('.card[data-id]')) {
+    card.classList.toggle('selected', state.selected.has(card.dataset.id));
+    onScreen.add(card.dataset.id);
+  }
+  for (const id of state.selected.keys()) if (!onScreen.has(id)) state.selected.delete(id);
+
+  const count = state.selected.size;
+  document.body.classList.toggle('selecting', count > 0);
+  if (!count) {
+    if (selbar) selbar.hidden = true;
+    return;
+  }
+  if (!selbar) {
+    selbar = document.createElement('div');
+    selbar.id = 'selbar';
+    document.body.appendChild(selbar);
+  }
+  selbar.textContent = '';
+  const info = document.createElement('span');
+  info.className = 'count';
+  info.textContent = `${count} selected`;
+  selbar.appendChild(info);
+  for (const action of selectionActions()) {
+    const btn = document.createElement('button');
+    btn.textContent = action.label;
+    if (action.danger) btn.className = 'danger';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      action.onClick();
+    });
+    selbar.appendChild(btn);
+  }
+  const close = document.createElement('button');
+  close.className = 'close';
+  close.title = 'Clear selection (Esc)';
+  close.textContent = '✕';
+  close.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearSelection();
+  });
+  selbar.appendChild(close);
+  selbar.hidden = false;
+}
+
+// Bulk actions — shared by the action bar and the right-click menu.
+function selectionActions() {
+  const nodes = selectedNodes();
+  const links = nodes.filter((n) => n.url);
+  const actions = [];
+  if (links.length) {
+    actions.push({
+      label: links.length > 1 ? `Open ${links.length} in new tabs` : 'Open in new tab',
+      onClick: () => {
+        openInBackground(links.map((n) => n.url));
+        clearSelection();
+      },
+    });
+  }
+  actions.push({
+    label: 'Move to…',
+    onClick: async () => {
+      const parentId = await pickFolder(`Move ${nodes.length} to folder`, nodes, nodes[0].parentId);
+      if (!parentId) return;
+      await moveNodes(nodes, parentId);
+      clearSelection();
+    },
+  });
+  actions.push({
+    label: 'Delete',
+    danger: true,
+    onClick: async () => {
+      const folders = nodes.length - links.length;
+      const ok = await confirmDialog(
+        `Delete ${nodes.length} selected item${nodes.length > 1 ? 's' : ''}?` +
+          (folders ? ' Folders are deleted with everything in them.' : ''),
+      );
+      if (!ok) return;
+      for (const node of nodes) {
+        try {
+          if (node.url) await chrome.bookmarks.remove(node.id);
+          else await chrome.bookmarks.removeTree(node.id);
+        } catch { /* already gone */ }
+      }
+      clearSelection();
+    },
+  });
+  return actions;
+}
+
+function showSelectionMenu(e) {
+  const actions = selectionActions();
+  const del = actions.pop();
+  showMenu(e.clientX, e.clientY, [
+    ...actions, 'sep', { label: 'Clear selection', onClick: clearSelection }, 'sep', del,
+  ]);
+}
+
+// Opens the links as background tabs right after this one, in order.
+function openInBackground(urls) {
+  chrome.tabs.getCurrent(async (tab) => {
+    for (const [i, url] of urls.entries()) {
+      await chrome.tabs.create({
+        url: toBrowserUrl(url),
+        active: false,
+        ...(tab ? { index: tab.index + 1 + i, openerTabId: tab.id } : {}),
+      });
+    }
+  });
 }
 
 // A bookmarks folder unfolds into a named, colored tab group — a workspace.
@@ -525,6 +677,11 @@ function renderBreadcrumbs(rootNode) {
 }
 
 async function renderMain() {
+  await renderMainView();
+  syncSelection();
+}
+
+async function renderMainView() {
   const s = state.settings;
   const rootNode = await resolveFolder(s.mainFolder, '1');
   state.rootId = rootNode?.id ?? null;
@@ -613,6 +770,7 @@ async function renderQuickbar() {
   quickbar.textContent = '';
   for (const node of links) quickbar.appendChild(createCard(node, folder.id, { quick: true }));
   quickbar.hidden = links.length === 0;
+  syncSelection();
 }
 
 function renderAll() {
@@ -640,6 +798,20 @@ async function init() {
   });
   document.body.addEventListener('contextmenu', (e) => {
     if (e.target === document.body || e.target.id === 'content') showBackgroundMenu(e);
+  });
+
+  // Esc or a click on empty space drops the selection. Menus and dialogs are
+  // left alone: their own clicks don't reach here / Esc closes them first.
+  // Capture phase: runs before the menu's own Esc handler has hidden it.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || document.getElementById('dlg').open) return;
+    if (!document.getElementById('ctxmenu').hidden) return;
+    clearSelection();
+  }, true);
+  document.addEventListener('click', (e) => {
+    if (!state.selected.size || document.getElementById('dlg').open) return;
+    if (e.target.closest('.card, #selbar, #ctxmenu, #dlg, #settingspanel')) return;
+    clearSelection();
   });
 
   // A link dragged in from outside (address bar, another page) becomes a
