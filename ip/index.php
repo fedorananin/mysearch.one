@@ -108,6 +108,22 @@
                 font-size: 125%;
                 margin: 10px 0;
             }
+            a.whitelist {
+                display: inline-block;
+                margin-top: 4px;
+                padding: 6px 14px;
+                border: 1px solid #2e5e3a;
+                border-radius: 999px;
+                background-color: #1c2b20;
+                color: #8fd19e;
+                font-size: 90%;
+                line-height: 1.3;
+            }
+            a.whitelist:hover {
+                color: #b3e6bf;
+                border-color: #3f7d4f;
+                text-decoration: none;
+            }
             hr {
                 border: none;
                 height: 1px;
@@ -179,6 +195,12 @@
                 echo '<small>🌐 <a href="'.$ip_data['asn_url'].'" target="_blank" title="'.$ip_data['asn_code'].'">'.$ip_data['asn_name'].'</a></small>';
             ?>
         </p>
+        <?php
+            // Shown only on a positive match; absence from the list is not displayed
+            if (!empty($ip_data['ru_mobile_whitelist'])){
+                echo '<a class="whitelist" href="https://github.com/ancored/ru-mobile-whitelist" target="_blank" title="Источник: github.com/ancored/ru-mobile-whitelist">✅ В белых списках мобильного интернета Роскомнадзора</a>';
+            }
+        ?>
         <hr>
         <p class="flag">
             <?php

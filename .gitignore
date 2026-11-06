@@ -12,6 +12,7 @@ ip/config.php
 ip/*.mmdb
 ip/*.mmdb.gz
 ip/last_update.txt
+ip/ru-mobile-whitelist.php
 
 # Personal notes
 ip/айпишники*.txt

@@ -44,6 +44,44 @@
         }
     }
 
+    // Is $ip inside the Russian mobile-internet whitelist? The list is compiled by
+    // update.php into ru-mobile-whitelist.php (sorted, non-overlapping ranges).
+    // Missing file (not downloaded yet) simply means "no match".
+    function isInMobileWhitelist($ip){
+        static $wl = null;
+        if ($wl === null) {
+            $file = __DIR__.'/ru-mobile-whitelist.php';
+            $wl = file_exists($file) ? include $file : [];
+            if (!is_array($wl)) $wl = [];
+        }
+        $bin = @inet_pton($ip);
+        if ($bin === false) return false;
+        if (strlen($bin) === 4) {
+            $set = $wl['v4'] ?? null;
+            $needle = unpack('N', $bin)[1];
+            $cmp = function ($a, $b) { return $a <=> $b; };
+        } else {
+            $set = $wl['v6'] ?? null;
+            $needle = bin2hex($bin);
+            $cmp = 'strcmp'; // all-digit hex is "numeric" to PHP; never compare it with <=
+        }
+        if (!$set || !$set['starts']) return false;
+        // Binary search for the last range whose start <= needle
+        $lo = 0;
+        $hi = count($set['starts']) - 1;
+        $found = -1;
+        while ($lo <= $hi) {
+            $mid = ($lo + $hi) >> 1;
+            if ($cmp($set['starts'][$mid], $needle) <= 0) {
+                $found = $mid;
+                $lo = $mid + 1;
+            } else {
+                $hi = $mid - 1;
+            }
+        }
+        return $found >= 0 && $cmp($needle, $set['ends'][$found]) <= 0;
+    }
+
     function getIPData($ip){
         $reader1 = new MaxMind\Db\Reader(__DIR__.'/ip_database.mmdb');
         $reader2 = new MaxMind\Db\Reader(__DIR__.'/geolite2-city-ipv4.mmdb');
@@ -149,6 +187,8 @@
                 'asn_url'=>empty($data['as_domain']) ? '/' : 'https://'.$data['as_domain'],
             ];
         }
+
+        $ip_data['ru_mobile_whitelist'] = isInMobileWhitelist($ip_data['ip']);
 
         return $ip_data;
     }
