@@ -1,5 +1,54 @@
 <?php
 
+    // Visitor's IP. Behind a local reverse proxy REMOTE_ADDR is private/reserved,
+    // so the first X-Forwarded-For entry is used instead.
+    function getClientIP(){
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+        if (!filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $forwarded = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+            if (filter_var($forwarded, FILTER_VALIDATE_IP)) $remote = $forwarded;
+        }
+        return $remote;
+    }
+
+    // IP for /txt and /json: ?ip=<address> if given, otherwise the visitor's own.
+    // Returns null for an invalid ?ip= (the endpoints answer 400).
+    function getRequestedIP(){
+        $q = trim((string) ($_GET['ip'] ?? ''));
+        if ($q === '') return getClientIP();
+        return filter_var($q, FILTER_VALIDATE_IP) ? $q : null;
+    }
+
+    // Everything we know about an IP, shaped for the plain-text / JSON endpoints
+    // (/txt, /json): ISO codes in upper case (RU, EU), no page-only values.
+    // getIPData() keeps lower-case codes because the page builds flag URLs from them.
+    function getPublicIPData($ip, $with_browser){
+        $d = getIPData($ip);
+        $data = [
+            'ip' => $d['ip'],
+            'country_code' => mb_strtoupper($d['country_code']),
+            'country_name' => $d['country_name'],
+            'region_name' => $d['region_name'],
+            'city_name' => $d['city_name'],
+            'latitude' => (float) $d['latitude'],
+            'longitude' => (float) $d['longitude'],
+            'timezone' => $d['timezone'],
+            'timezone_offset' => $d['timezone_offset'],
+            'continent_code' => mb_strtoupper($d['continent_code']),
+            'continent_name' => $d['continent_name'],
+            'asn_code' => $d['asn_code'],
+            'asn_name' => $d['asn_name'],
+            'asn_domain' => $d['asn_domain'] ?: null,
+            'ru_mobile_whitelist' => $d['ru_mobile_whitelist'],
+        ];
+        if ($with_browser) {
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $data['browser'] = getBrowserData($ua);
+            $data['browser']['user_agent'] = $ua;
+        }
+        return $data;
+    }
+
     function getBrowserData($useragent){
         $Browser = new foroco\BrowserDetection();
         $result = $Browser->getAll($useragent);
@@ -126,7 +175,8 @@
                 'asn_url'=>'/',
             ];
         }else{
-            $data_extra=$reader2->get($ip);
+            // geolite2-city-ipv4 is IPv4-only (throws on IPv6); IPv6 falls through to DB-IP below
+            $data_extra=filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? $reader2->get($ip) : null;
             $data_extra_backup=$reader3->get($ip);
             $cc=(string) @$data_extra['country_code'];
             $level=1;

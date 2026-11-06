@@ -1,9 +1,9 @@
 <?php
+    // /ip — the visitor's IP as plain text, nothing else
+    include ("functions_project.php");
 
-    $useragent = $_SERVER['HTTP_USER_AGENT'];
-    $ip = $_SERVER['REMOTE_ADDR'];
-    //$ip='45.154.89.177';
+    header('Content-Type: text/plain; charset=utf-8');
+    header('Cache-Control: no-store');
+    header('Access-Control-Allow-Origin: *');
 
-    echo $ip;
-
-?>
+    echo getClientIP();

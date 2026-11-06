@@ -7,13 +7,7 @@
     include ("functions_project.php");
 
     $useragent = $_SERVER['HTTP_USER_AGENT'];
-    $remote = $_SERVER['REMOTE_ADDR'];
-    if (!filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $forwarded = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
-        $forwarded = trim($forwarded);
-        if (filter_var($forwarded, FILTER_VALIDATE_IP)) $remote = $forwarded;
-    }
-    $ip = $real_ip = $remote;
+    $ip = $real_ip = getClientIP();
     //$ip='45.154.89.177';
     $get_ip=@$_GET['ip'];
     if ($get_ip<>''){
@@ -124,6 +118,9 @@
                 border-color: #3f7d4f;
                 text-decoration: none;
             }
+            p.formats {
+                margin: 0 0 8px;
+            }
             hr {
                 border: none;
                 height: 1px;
@@ -217,19 +214,27 @@
             <span>🌍 <?php echo $ip_data['continent_name']; ?></span>
         </p>
         <hr>
-        <form action="/" method="get">
-            <?php
-                echo '<input type="search" name="ip" value="'.$ip.'" placeholder="Type in any IPv4" class="search-input">';
-            ?>
-        </form>
-        <p style="margin-top:4px;font-size:80%;margin-bottom:0;">Enter any IP address to get detailed information about its location, network, and timezone.</p>
-        <hr>
         <?php
             if ($ip==$real_ip){
                 echo '<p>🖥️ '.$browser['string'].'</p><hr>';
             }
         ?>
-        <p><!--<a href="/api.html">Free API</a><br>--><small>© 2025 ⁃ Made by <a href="https://www.linkedin.com/in/fedorananin/" target="_blank">Fёdor Ananin</a></small></p>
+        <form action="/" method="get">
+            <?php
+                echo '<input type="search" name="ip" value="'.$ip.'" placeholder="Type in any IP address" class="search-input">';
+            ?>
+        </form>
+        <p style="margin-top:4px;font-size:80%;margin-bottom:0;">Enter any IP address to get detailed information about its location, network, and timezone.</p>
+        <hr>
+        <?php
+            // /txt and /json describe the IP shown on the page; /ip is always the visitor's own
+            $lookup = ($ip==$real_ip) ? '' : '?ip='.urlencode($ip);
+            echo '<p class="formats"><small>Plain text &amp; JSON: '
+                .'<a href="ip" title="Your IP only, plain text">/ip</a> · '
+                .'<a href="txt'.$lookup.'" title="All data, plain text">/txt</a> · '
+                .'<a href="json'.$lookup.'" title="All data, JSON">/json</a></small></p>';
+        ?>
+        <p><!--<a href="/api.html">Free API</a><br>--><small>© 2025<?php if (date('Y') > 2025) echo '–'.date('Y'); ?> ⁃ Made by <a href="https://www.linkedin.com/in/fedorananin/" target="_blank">Fёdor Ananin</a></small></p>
     </div>
     </body>
 </html>
