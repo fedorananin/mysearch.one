@@ -1,8 +1,20 @@
 <?php
 
+    // config.php is optional here (PROXY_KEY); the pages must work without it
+    if (is_file(__DIR__.'/config.php')) require_once __DIR__.'/config.php';
+
     // Visitor's IP. Behind a local reverse proxy REMOTE_ADDR is private/reserved,
     // so the first X-Forwarded-For entry is used instead.
     function getClientIP(){
+        // Relayed by our own proxy host (ip-proxy/, ru.ip.mysearch.one): the visitor's IP
+        // comes in X-MySearch-Client-IP and is trusted ONLY with the shared PROXY_KEY —
+        // otherwise anyone could claim any IP with a header.
+        $key = (string) ($_SERVER['HTTP_X_MYSEARCH_PROXY_KEY'] ?? '');
+        if ($key !== '' && defined('PROXY_KEY') && PROXY_KEY !== '' && hash_equals(PROXY_KEY, $key)) {
+            $relayed = trim((string) ($_SERVER['HTTP_X_MYSEARCH_CLIENT_IP'] ?? ''));
+            if (filter_var($relayed, FILTER_VALIDATE_IP)) return $relayed;
+        }
+
         $remote = $_SERVER['REMOTE_ADDR'] ?? '';
         if (!filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $forwarded = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);

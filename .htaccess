@@ -3,26 +3,24 @@ RewriteEngine On
 # ip.mysearch.one/ip is rewritten to ip/ip.php below, but "ip" is also a real folder here
 # and mod_dir would still answer 301 -> /ip/ (DirectorySlash runs after the rewrite).
 # Switched off for this one URL only.
-<If "%{HTTP_HOST} =~ /^(ru\.)?ip\.mysearch\.one$/i && %{REQUEST_URI} == '/ip'">
+<If "%{HTTP_HOST} =~ /^ip\.mysearch\.one$/i && %{REQUEST_URI} == '/ip'">
     DirectorySlash Off
 </If>
 
 # Canonical hosts: mysearch.one, ip.mysearch.one, pomodoro.mysearch.one.
-# ru.ip.mysearch.one is an exact copy of ip.mysearch.one, served as-is (NOT redirected):
-# a second hostname for testing per-domain routing (VPN/proxy split rules).
 # Anything else (www, server IP, stray aliases) -> main domain.
-RewriteCond %{HTTP_HOST} !^(mysearch\.one|(ru\.)?ip\.mysearch\.one|pomodoro\.mysearch\.one)$ [NC]
+RewriteCond %{HTTP_HOST} !^(mysearch\.one|ip\.mysearch\.one|pomodoro\.mysearch\.one)$ [NC]
 RewriteRule ^(.*)$ https://mysearch.one/$1 [R=301,L]
 
 # ip.mysearch.one short endpoints: /ip (plain IP), /txt (all data, text), /json (all data, JSON)
 # Original request only (empty REDIRECT_STATUS): .htaccess rules run again after every
 # internal rewrite, and "/" -> "ip/" would otherwise match ^ip/?$ on the second pass.
 RewriteCond %{ENV:REDIRECT_STATUS} ^$
-RewriteCond %{HTTP_HOST} ^(ru\.)?ip\.mysearch\.one$ [NC]
+RewriteCond %{HTTP_HOST} ^ip\.mysearch\.one$ [NC]
 RewriteRule ^(ip|txt|json)/?$ ip/$1.php [L]
 
-# ip.mysearch.one (and ru.ip.) is served from the /ip subfolder
-RewriteCond %{HTTP_HOST} ^(ru\.)?ip\.mysearch\.one$ [NC]
+# ip.mysearch.one is served from the /ip subfolder
+RewriteCond %{HTTP_HOST} ^ip\.mysearch\.one$ [NC]
 RewriteCond %{REQUEST_URI} !^/ip/
 RewriteRule ^(.*)$ ip/$1 [L]
 

@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# This folder is the document root of ru.ip.mysearch.one (a separate host with its own IP).
+# It also sits inside the main site's document root, where this file overrides the root
+# rewrite rules — so refuse every other hostname instead of proxying for it.
+RewriteCond %{HTTP_HOST} !^ru\.ip\.mysearch\.one$ [NC]
+RewriteRule ^ - [R=404,L]
+
+# Everything goes through the proxy script (original request only, no loop)
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^ index.php [L]
+
+Options -Indexes

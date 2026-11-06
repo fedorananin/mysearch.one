@@ -7,6 +7,7 @@
 
 # Local secrets (copy ip/config.example.php to ip/config.php and fill in)
 ip/config.php
+ip-proxy/config.php
 
 # IP databases — downloaded by ip/update.php, never commit
 ip/*.mmdb

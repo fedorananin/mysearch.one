@@ -1,5 +1,5 @@
 <?php
-    require __DIR__.'/config.php';
+    require_once __DIR__.'/config.php';
 
     // Only cron (CLI) or requests carrying the secret key may trigger an update
     if (php_sapi_name() !== 'cli' && (($_GET['key'] ?? '') !== UPDATE_KEY || UPDATE_KEY === '')) {
